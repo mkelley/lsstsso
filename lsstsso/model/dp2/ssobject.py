@@ -1,4 +1,4 @@
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 import astropy.units as u
 from ..table import RSPTable
 

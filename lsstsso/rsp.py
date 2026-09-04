@@ -6,12 +6,13 @@ import os
 import hashlib
 import subprocess
 from glob import glob
+from logging import getLogger
 
 import pyvo as vo
 from astropy.table import Table
 from pyvo.auth import AuthSession
 
-from .model.result import Result
+from .result import make_result
 
 
 class RSP:
@@ -26,7 +27,7 @@ class RSP:
             "https://data.lsst.cloud/api/tap", session=self.session
         )
 
-    def query_tap(self, query: str, cached: bool = True) -> Result:
+    def query_tap(self, query: str, cached: bool = True):
         """Query the RSP TAP endpoint.
 
 
@@ -44,9 +45,11 @@ class RSP:
 
         """
 
-        result = self._cached_result(query, cached)
-        if result is not None:
-            return Result(result)
+        logger = getLogger()
+
+        table = self._cached_result(query, cached)
+        if table is not None:
+            return make_result(table)
 
         job = self.tap_service.submit_job(query)
         job.run()
@@ -54,15 +57,17 @@ class RSP:
         job.raise_if_error()
 
         tap_result = job.fetch_result()
+        logger.info(tap_result.status[0])
+
         job.delete()
 
-        result = tap_result.to_table()
-        result.meta = tap_result.infos
+        table = tap_result.to_table()
+        table.meta = tap_result.infos
 
         if cached:
-            self._cache_query(query, result)
+            self._cache_query(query, table)
 
-        return Result(result)
+        return make_result(table)
 
     @staticmethod
     def clean_cache(max_age: float = 0):
@@ -83,21 +88,25 @@ class RSP:
         return os.environ["HOME"] + "/.cache/lsst-sso/" + hash.hexdigest() + ".ecsv"
 
     @staticmethod
-    def _cached_result(query: str, cached: bool) -> Result | None:
+    def _cached_result(query: str, cached: bool):
         if not cached:
             return None
 
         fn = RSP.cache_file_name(query)
+
+        logger = getLogger()
+        logger.info(f"Returning cached result from {fn}")
+
         if os.path.exists(fn):
             return Table.read(fn)
 
         return None
 
-    def _cache_query(self, query: str, result: Table):
+    def _cache_query(self, query: str, table: Table):
         fn = self.cache_file_name(query)
 
         dirname = os.path.dirname(fn)
         if not os.path.exists(dirname):
             subprocess.check_call(["mkdir", "-p", dirname])
 
-        result.write(fn, overwrite=True)
+        table.write(fn, format="ascii.ecsv", overwrite=True)
