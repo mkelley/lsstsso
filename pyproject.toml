@@ -1,6 +1,6 @@
 [project]
-name = "lsst-sso"
-description = "Get and plot light curves of solar system objects observed by LSST"
+name = "lsstsso"
+description = "Inspect data of solar system objects observed by LSST"
 readme = "README.md"
 authors = [
     { name = "Michael S. P. Kelley", email = "msk@astro.umd.edu" }
@@ -21,7 +21,7 @@ requires = ["setuptools>=80", "wheel", "setuptools_scm[toml]>=9"]
 build-backend = "setuptools.build_meta"
 
 [tool.setuptools_scm]
-write_to = "lsst_sso/_version.py"
+write_to = "lsstsso/_version.py"
 
 [tool.setuptools]
 zip-safe = false
