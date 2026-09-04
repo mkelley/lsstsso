@@ -65,18 +65,20 @@ def make_result(table: Table):
 
             return next(iter(lengths))
 
-        def __repr__(self):
-            return repr(self.as_table())
-
         def __str__(self):
             return "\n".join(self.as_table().pformat_all())
+
+        def as_table(self):
+            return Table(self._asdict())
 
         def columns(self) -> list[str]:
             """The column names."""
             return self._fields
 
-        def as_table(self):
-            return Table(self._asdict())
+        def rows(self):
+            for i in range(len(self)):
+                yield self[i]
+            raise StopIteration  # noqa: PLR1708
 
         def sort(self, field: str, reversed: bool = True):
             """In-place sort by the requested column ."""

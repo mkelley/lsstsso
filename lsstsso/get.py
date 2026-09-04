@@ -23,18 +23,18 @@ def ssobject(rsp: RSP, constraints: str, columns: list[str] | None = None, cache
 
     if columns is None:
         columns = [
-            "ssObjectId",
-            "designation",
-            "nObs",
-            "arc",
-            "firstObservationMjdTai",
-            "tisserand_J",
-            "permid",
+            "s.ssObjectId",
+            "s.designation",
+            "s.nObs",
+            "s.arc",
+            "s.firstObservationMjdTai",
+            "s.tisserand_J",
+            "n.permid",
         ]
 
     query = f"""
-SELECT {",".join(columns)} FROM dp2.SSObject
-LEFT JOIN dp2.numbered_identifications
+SELECT {",".join(columns)} FROM dp2.SSObject AS s
+LEFT JOIN dp2.numbered_identifications AS n
 ON unpacked_primary_provisional_designation = designation
 WHERE {constraints}
 """

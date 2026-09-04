@@ -170,6 +170,13 @@ A subset of rows may be retrieved using slices or arrays, as usual with numpy ob
 5785498485624156464 60847.158599118426   4.736578  3.751748  3.4085186 ...
 ```
 
+The `Result` object may be iterated over, row-by-row, using the `rows()` method:
+
+```python
+>>> for row in lc.rows():
+...     do_something(row)
+```
+
 ### Result: sorting
 
 Use the sort method to sort the data:
