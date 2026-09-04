@@ -23,19 +23,19 @@ def ssobject(rsp: RSP, constraints: str, columns: list[str] | None = None, cache
 
     if columns is None:
         columns = [
-            "s.ssObjectId",
-            "s.designation",
-            "s.nObs",
-            "s.arc",
-            "s.firstObservationMjdTai",
-            "s.tisserand_J",
-            "n.permid",
+            "ssObjectId",
+            "designation",
+            "nObs",
+            "arc",
+            "firstObservationMjdTai",
+            "tisserand_J",
+            "permid",
         ]
 
     query = f"""
-SELECT {",".join(columns)} FROM dp2.SSObject AS s
-LEFT JOIN dp2.numbered_identifications AS n
-ON n.unpacked_primary_provisional_designation = s.designation
+SELECT {",".join(columns)} FROM dp2.SSObject
+LEFT JOIN dp2.numbered_identifications
+ON unpacked_primary_provisional_designation = designation
 WHERE {constraints}
 """
     logger.debug(query)
@@ -58,6 +58,8 @@ def lightcurve(
     rsp: RSP, ssobjectid: int, columns: list[str] | None = None, cached=True
 ):
     """Get an SSObject's lightcurve.
+
+    The query joins the SSSource and DiaSource tables.
 
 
     Parameters

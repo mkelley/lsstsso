@@ -24,15 +24,15 @@ def make_result(table: Table):
 
     """
 
-    ResultRow = namedtuple("ResultBase", table.colnames)
+    ResultRow = namedtuple("ResultRow", table.colnames)
     ResultRow.__doc__ = """A single row of data."""
 
-    class Result(namedtuple("ResultBase", table.colnames)):
+    class Result(namedtuple("Result", table.colnames)):
         """A table of data."""
 
         __slots__ = ()
 
-        def __getitem__(self, key: int | slice | str):
+        def __getitem__(self, key: int | slice | list | np.ndarray | str):
             """Get a column or a new result from a row or rows.
 
 
@@ -41,11 +41,13 @@ def make_result(table: Table):
             key : int, slice, or str
                 * For integers: returns a single row of data as a new ``ResultRow``.
                 * For slices: returns a new ``Result`` based on the slice.
+                * For lists or arrays: returns a new ``Result`` based on the
+                  array indexes or boolean selection.
                 * For strings: returns the requested column.
 
             """
 
-            if isinstance(key, int | slice):
+            if isinstance(key, int | slice | list | np.ndarray):
                 values = [self[field][key] for field in self._fields]
 
                 if isinstance(key, int):
@@ -61,34 +63,51 @@ def make_result(table: Table):
             if len(lengths) != 1:
                 raise ValueError("Mismatched column lengths!")
 
-            return list(lengths)[0]
+            return next(iter(lengths))
 
         def __repr__(self):
-            print(str(self))
+            return repr(self.as_table())
 
         def __str__(self):
-            return self.as_table().pprint_all()
+            return "\n".join(self.as_table().pformat_all())
+
+        def columns(self) -> list[str]:
+            """The column names."""
+            return self._fields
 
         def as_table(self):
             return Table(self._asdict())
 
-        def sort(self, field: str):
-            """Sort by the requested column ."""
+        def sort(self, field: str, reversed: bool = True):
+            """In-place sort by the requested column ."""
 
             i = np.argsort(self[field])
-            return Result(*(self[field][i] for field in self._fields))
+
+            if reversed:
+                i = i[::-1]
+
+            for f in self._fields:
+                self[f][:] = self[f][i]
 
     columns = []
     for col in table.columns:
         if "Mjd" in col and "Tai" in col:
-            columns.append(Time(table[col], scale="tai", format="mjd"))
+            data = Time(table[col], scale="tai", format="mjd")
         elif col in ("peri_time", "epoch_mjd"):
-            columns.append(Time(table[col], scale="tt", format="mjd"))
+            data = Time(table[col], scale="tt", format="mjd")
         elif col == "band":
-            columns.append(np.array([Band[b] for b in table[col]]))
+            data = np.array([Band[b] for b in table[col]])
         elif table[col].unit is None:
-            columns.append(table[col].data)
+            data = table[col].data
         else:
-            columns.append(table[col].quantity)
+            data = table[col].quantity
+
+        if hasattr(data, "mask") and not any(data.mask):
+            if hasattr(data, "unmasked"):
+                data = data.unmasked
+            else:
+                data = data.data
+
+        columns.append(data)
 
     return Result(*columns)

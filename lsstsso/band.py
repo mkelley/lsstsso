@@ -1,4 +1,10 @@
+"""
+Based on ``Bands`` from mskpy, https://doi.org/10.5281/zenodo.17516897, see
+licenses/
+"""
+
 from enum import Enum
+import astropy.units as u
 
 
 class Band(Enum):
@@ -9,18 +15,25 @@ class Band(Enum):
     z = 4
     y = 5
 
-    def __gt__(self, other):
-        if self.__class__ is other.__class__:
-            return self.value > other.value
-        return NotImplemented
+    def __eq__(self, band):
+        return self.value == band.value
 
-    def __lt__(self, other):
-        if self.__class__ is other.__class__:
-            return self.value < other.value
-        return NotImplemented
+    def __hash__(self):
+        return self.value
+
+    def __lt__(self, band):
+        return self.value < band.value
+
+    def __gt__(self, band):
+        return self.value > band.value
 
     def __repr__(self):
-        return f"<Band: {str(self)}>"
+        return f"<Band: {self}, {self.wave}>"
 
     def __str__(self):
         return self.name
+
+    @property
+    def wave(self):
+        wavelengths = [372.4, 480.7, 622.1, 755.9, 868.0, 975.3] * u.nm
+        return wavelengths[self.value]
