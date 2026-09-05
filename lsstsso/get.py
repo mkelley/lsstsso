@@ -81,6 +81,8 @@ def lightcurve(
         columns = [
             "s.SSObjectId",
             "d.midpointMjdTai",
+            "d.ra",
+            "d.dec",
             "s.helioRange",
             "s.topoRange",
             "s.phaseAngle",
