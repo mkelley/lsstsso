@@ -1,7 +1,6 @@
 from logging import getLogger
 import astropy.units as u
 from astropy.coordinates import SkyCoord
-from ..expect import expect
 from ..rsp import RSP
 
 
@@ -50,7 +49,8 @@ def phot_by_positions(
 
     """
 
-    expect(table in ["Source", "DiaSource"], ValueError(f"Invalid table: {table}"))
+    if table not in ["Source", "DiaSource"]:
+        raise ValueError(f"Invalid table: {table}")
 
     logger = getLogger("lsstsso")
     logger.info(

@@ -4,7 +4,6 @@ from astropy.coordinates import SkyCoord
 from astropy.table import Table
 from astropy.time import Time
 
-from .expect import expect
 from .result import ResultClass
 
 
