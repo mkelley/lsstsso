@@ -91,7 +91,10 @@ def make_result(table: Table) -> ResultClass:
             return "\n".join(self.as_table().pformat_all())
 
         def as_table(self):
-            return Table(self._asdict())
+            tab = Table(self._asdict())
+            if "band" in tab.columns() and isinstance(tab["band"][0], Band):
+                tab["band"] = [str(b) for b in tab["band"]]
+            return tab
 
         def columns(self) -> list[str]:
             """The column names."""

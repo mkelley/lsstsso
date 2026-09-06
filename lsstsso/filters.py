@@ -37,9 +37,9 @@ def sky_and_time(
     -------
     matches : Table
         A row for each matched coordinate in ``coords`` containing the array
-        index from ``coords``, a copy of the coordinate and time, the identified
-        nearest result coordinate, the difference in time, and the angular
-        separation.
+        index from ``coords``, a copy of the coordinate and time, the index of
+        the nearest result, the identified nearest result coordinate, the
+        difference in time, and the angular separation.
 
     """
 
@@ -71,6 +71,7 @@ def sky_and_time(
                 "n": n,
                 "coords": coords[n],
                 "t": t[n],
+                "nearest": nearest,
                 "nearest coords": coords_r[nearest],
                 "dt": dt[nearest],
                 "sep": d.to("arcsec"),

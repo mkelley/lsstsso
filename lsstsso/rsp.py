@@ -116,6 +116,8 @@ class RSP:
             logger.info(f"Returning cached result from {fn}")
             return Table.read(fn)
 
+        logger.info(f"Query not cached ({fn})")
+
         return None
 
     def _cache_query(self, query: str, table: Table, **kwargs):
