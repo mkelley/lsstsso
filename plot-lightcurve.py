@@ -12,11 +12,9 @@ parser = argparse.ArgumentParser()
 parser.add_argument("ssobjectid")
 args = parser.parse_args()
 
-rsp = lsstsso.RSP()
-
-sso = lsstsso.get.ssobject(rsp, f"ssObjectId = {args.ssobjectid}")[0]
-source = lsstsso.get.lightcurve(rsp, args.ssobjectid)
-orbit = lsstsso.get.orbit(rsp, sso.designation)[0]
+sso = lsstsso.get.ssobject(f"ssObjectId = {args.ssobjectid}")[0]
+source = lsstsso.get.lightcurve(args.ssobjectid)
+orbit = lsstsso.get.orbit(sso.designation)[0]
 
 bands = source.band
 m = source.apFlux.to_value(u.ABmag)

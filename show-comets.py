@@ -1,6 +1,5 @@
-from lsstsso import RSP, get
+import lsstsso
 
-rsp = RSP()
-comets = get.comets(rsp)
+comets = lsstsso.get.comets()
 comets.sort("designation")
 print(comets)

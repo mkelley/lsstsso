@@ -1,14 +1,14 @@
 from logging import getLogger
-from ..rsp import RSP
+from .. import rsp
+from ..result import ResultClass
 
 
 def ssobject(
-    rsp: RSP,
     constraints: str,
     columns: list[str] | None = None,
     cached=True,
     **kwargs,
-):
+) -> ResultClass:
     """Query the SSObject and numbered_identifications tables.
 
 
@@ -56,4 +56,5 @@ WHERE {constraints}
 """
     logger.debug(query)
 
-    return rsp.query_tap(query, cache=cached, **kwargs)
+    with rsp.provider() as _rsp:
+        return _rsp.query_tap(query, cache=cached, **kwargs)

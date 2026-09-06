@@ -6,6 +6,7 @@ import os
 import hashlib
 import subprocess
 import time
+from contextlib import contextmanager
 from glob import glob
 from logging import getLogger
 
@@ -134,3 +135,27 @@ class RSP:
         # write the file
         logger.info(f"Caching result to {fn}")
         table.write(fn, format="ascii.ecsv", overwrite=True)
+
+
+rsp = RSP()
+
+
+@contextmanager
+def provider(refresh=False):
+    """Context manager for the RSP client.
+
+
+    Parameters
+    ----------
+    refresh : bool
+        Set to true to force a refresh on the RSP client, e.g., if the token
+        changed and/or the environment was reloaded (via os.reload_environ()).
+
+    """
+
+    global rsp
+
+    if refresh:
+        rsp = RSP()
+
+    yield rsp

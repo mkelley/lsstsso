@@ -1,8 +1,11 @@
 from logging import getLogger
-from ..rsp import RSP
+from .. import rsp
+from ..result import ResultClass
 
 
-def orbit(rsp: RSP, constraints: str, columns: list[str] | None = None, cached=True):
+def orbit(
+    constraints: str, columns: list[str] | None = None, cached=True
+) -> ResultClass:
     """Query the mpc_orbit table.
 
 
@@ -52,4 +55,5 @@ WHERE '{constraints}'
 """
     logger.debug(query)
 
-    return rsp.query_tap(query, cache=cached)
+    with rsp.provider() as _rsp:
+        return _rsp.query_tap(query, cache=cached)

@@ -1,18 +1,19 @@
 from logging import getLogger
 import astropy.units as u
 from astropy.coordinates import SkyCoord
-from ..rsp import RSP
+
+from .. import rsp
+from ..result import ResultClass
 
 
 def phot_by_positions(
-    rsp: RSP,
     coords: SkyCoord,
     tolerance: u.Quantity = 1 * u.arcsec,
     table: str = "DiaSource",
     constraints: str | None = None,
     columns: list[str] | None = None,
     cache=True,
-):
+) -> ResultClass:
     """Query the Source or DiaSource tables for photometry near coordinates.
 
 
@@ -100,4 +101,5 @@ def phot_by_positions(
 
     logger.debug(query)
 
-    return rsp.query_tap(query, uploads={"coords": coords}, cache=cache)
+    with rsp.provider() as _rsp:
+        return _rsp.query_tap(query, uploads={"coords": coords}, cache=cache)

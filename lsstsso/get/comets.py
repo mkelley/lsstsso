@@ -1,8 +1,8 @@
 from .ssobject import ssobject
-from ..rsp import RSP
+from ..result import ResultClass
 
 
-def comets(rsp: RSP, columns: list[str] | None = None, cached=True):
+def comets(columns: list[str] | None = None, cached=True) -> ResultClass:
     """Get a list of all SSObjects with cometary designations.
 
 
@@ -24,4 +24,4 @@ def comets(rsp: RSP, columns: list[str] | None = None, cached=True):
     """
 
     constraints = "s.designation LIKE 'C/%' OR s.designation LIKE 'P/%' OR s.designation LIKE 'A/%'"
-    return ssobject(rsp, constraints, columns=columns, cached=cached)
+    return ssobject(constraints, columns=columns, cached=cached)

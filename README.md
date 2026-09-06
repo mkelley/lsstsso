@@ -32,8 +32,7 @@ Query the Rubin Science Platform for a list of all Solar System objects with com
 
 ```python
 >>> import lsstsso
->>> rsp = lsstsso.RSP()
->>> comets = lsstsso.get.comets(rsp)
+>>> comets = lsstsso.get.comets()
 >>> comets
 <Table length=47>
      ssObjectId     designation   nObs     arc     firstObservationMjdTai tisserand_J permid
@@ -47,7 +46,7 @@ Query the Rubin Science Platform for a list of all Solar System objects with com
 Get the lightcurve of an object.  The result is based on a join with the DiaSource table:
 
 ```python
->>> lc = lsstsso.get.lightcurve(rsp, 5785498485624156464)
+>>> lc = lsstsso.get.lightcurve(5785498485624156464)
 >>> lc
 <Table length=11>
      SSObjectId       midpointMjdTai   helioRange topoRange phaseAngle ...
@@ -61,7 +60,7 @@ Get the lightcurve of an object.  The result is based on a join with the DiaSour
 Query the SSObject table.  This function takes a string of constraints (i.e., ADQL "WHERE" clauses):
 
 ```python
->>> sso = lsstsso.get.ssobject(rsp, "ssObjectId = 5785498485624156464")
+>>> sso = lsstsso.get.ssobject("ssObjectId = 5785498485624156464")
 >>> sso
 <Table length=1>
      ssObjectId     designation  nObs   arc   firstObservationMjdTai tisserand_J permid
@@ -73,7 +72,7 @@ Query the SSObject table.  This function takes a string of constraints (i.e., AD
 
 Get an object's orbit.
 ```python
->>> orbit = lsstsso.get.orbit(rsp, "P/1988 D1")
+>>> orbit = lsstsso.get.orbit("P/1988 D1")
 >>> orbit
 <Table length=1>
 designation epoch_mjd    a           q                 e         ...
@@ -87,14 +86,16 @@ If you needed other columns on these queries, use the `columns=` keyword argumen
 
 ```python
 >>> columns = ["designation", "u_nObs", "g_nObs", "r_nObs", "i_nObs", "z_nObs", "y_nObs"]
->>> n_obs = lsstsso.get.ssobject(rsp, "designation LIKE 'P/%'", columns=columns)
->>> orbit = lsstsso.get.orbit(rsp, "P/1988 D1", columns=["*"])  # get all columns
+>>> n_obs = lsstsso.get.ssobject("designation LIKE 'P/%'", columns=columns)
+>>> orbit = lsstsso.get.orbit("P/1988 D1", columns=["*"])  # get all columns
 ```
 
-Make your own query with the `RSP` object:
+Make your own query with the `RSP` object.  A configured instance can be used in
+a context manager:
 
 ```python
->>> result = rsp.query_tap("SELECT whatever FROM dp2.table WHERE constraints")
+>>> with lsstsso.rsp.provider() as rsp:
+>>>    result = rsp.query_tap("SELECT whatever FROM dp2.table WHERE constraints")
 ```
 
 Avoid returning column names that conflict with `Result` methods (e.g., "columns", "sort", "as_table").
@@ -112,7 +113,7 @@ Get a list of columns in the `Result` object:
 Result columns are accessed by class attributes or by indexing with a string:
 
 ```python
->>> lc = lsstsso.get.lightcurve(rsp, 5785498485624156464)
+>>> lc = lsstsso.get.lightcurve(5785498485624156464)
 >>> lc.SSObjectId
 array([5785498485624156464, 5785498485624156464, 5785498485624156464,
        5785498485624156464, 5785498485624156464, 5785498485624156464,

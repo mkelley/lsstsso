@@ -1,10 +1,11 @@
 from logging import getLogger
-from ..rsp import RSP
+from ..result import ResultClass
+from .. import rsp
 
 
 def lightcurve(
-    rsp: RSP, ssobjectid: int, columns: list[str] | None = None, cached=True
-):
+    ssobjectid: int, columns: list[str] | None = None, cached=True
+) -> ResultClass:
     """Query the SSSource and DiaSource tables for photometry of an object.
 
 
@@ -59,4 +60,5 @@ ORDER BY d.midpointMjdTai
     )
     logger.debug(query)
 
-    return rsp.query_tap(query, cache=cached)
+    with rsp.provider() as _rsp:
+        return _rsp.query_tap(query, cache=cached)
