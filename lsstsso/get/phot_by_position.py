@@ -12,7 +12,7 @@ def phot_by_position(
     table: str = "DiaSource",
     constraints: str | None = None,
     columns: list[str] | None = None,
-    cached=True,
+    cache=True,
 ):
     """Query the Source or DiaSource tables for photometry near coordinates.
 
@@ -62,8 +62,8 @@ def phot_by_position(
         columns += [
             "coords.ra AS query_ra",
             "coords.dec AS query_dec",
-            "source.ra AS source_ra",
-            "source.dec AS source_dec",
+            "source.ra",
+            "source.dec",
             "source.midpointMjdTai",
             "source.band",
             "source.apFlux",
@@ -84,9 +84,4 @@ def phot_by_position(
 
     logger.debug(query)
 
-    return rsp.query_tap(
-        query,
-        uploads={"coords": coords},
-        cached=cached,
-        units={"query_ra": "deg", "query_dec": "deg"},
-    )
+    return rsp.query_tap(query, uploads={"coords": coords}, cache=cache)

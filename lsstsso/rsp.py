@@ -29,7 +29,7 @@ class RSP:
         )
 
     def query_tap(
-        self, query: str, units: dict[str, str] = {}, cached: bool = True, **kwargs
+        self, query: str, units: dict[str, str] = {}, cache: bool = True, **kwargs
     ):
         """Query the RSP TAP endpoint.
 
@@ -57,7 +57,7 @@ class RSP:
 
         logger = getLogger("lsstsso")
 
-        table = self._cached_result(query, cached, **kwargs)
+        table = self._cached_result(query, cache, **kwargs)
         if table is not None:
             return make_result(table)
 
@@ -67,20 +67,17 @@ class RSP:
         job.wait(phases=["COMPLETED", "ERROR"])
         job.raise_if_error()
 
-        tap_result = job.fetch_result()
-        end = time.monotonic()
-
-        logger.info("%s in %.2f s", tap_result.status[0], end - start)
-
-        job.delete()
+        try:
+            tap_result = job.fetch_result()
+            end = time.monotonic()
+        finally:
+            logger.info("%s in %.2f s", tap_result.status[0], end - start)
+            job.delete()
 
         table = tap_result.to_table()
         table.meta = tap_result.infos
 
-        for col, unit in units.items():
-            table[col].unit = unit
-
-        if cached:
+        if cache:
             self._cache_query(query, table, **kwargs)
 
         return make_result(table)
@@ -104,25 +101,34 @@ class RSP:
         return os.environ["HOME"] + "/.cache/lsst-sso/" + hash.hexdigest() + ".ecsv"
 
     @staticmethod
-    def _cached_result(query: str, cached: bool, **kwargs):
-        if not cached:
+    def _cached_result(query: str, cache: bool, **kwargs):
+        logger = getLogger("lsstsso")
+
+        # are we using the caching system?
+        if not cache:
             return None
 
+        # get the file name
         fn = RSP.cache_file_name(query, **kwargs)
 
-        logger = getLogger("lsstsso")
-        logger.info(f"Returning cached result from {fn}")
-
+        # if the file exists, return the table
         if os.path.exists(fn):
+            logger.info(f"Returning cached result from {fn}")
             return Table.read(fn)
 
         return None
 
     def _cache_query(self, query: str, table: Table, **kwargs):
+        logger = getLogger("lsstsso")
+
+        # get the file name
         fn = self.cache_file_name(query, **kwargs)
 
+        # make directories as needed
         dirname = os.path.dirname(fn)
         if not os.path.exists(dirname):
             subprocess.check_call(["mkdir", "-p", dirname])
 
+        # write the file
+        logger.info(f"Caching result to {fn}")
         table.write(fn, format="ascii.ecsv", overwrite=True)

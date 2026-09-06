@@ -48,4 +48,4 @@ WHERE {constraints}
 """
     logger.debug(query)
 
-    return rsp.query_tap(query, cached=cached)
+    return rsp.query_tap(query, cache=cached)

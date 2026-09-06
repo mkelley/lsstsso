@@ -1,13 +1,18 @@
 from collections import namedtuple
+from typing import TypeVar, overload
 
+import astropy.units as u
 import numpy as np
 from astropy.table import Table
 from astropy.time import Time
 
 from .band import Band
 
+ResultClass = TypeVar("Result")
+ResultRowClass = TypeVar("ResultRow")
 
-def make_result(table: Table):
+
+def make_result(table: Table) -> ResultClass:
     """Convert a table into a convenient ``Result`` object.
 
 
@@ -32,7 +37,19 @@ def make_result(table: Table):
 
         __slots__ = ()
 
-        def __getitem__(self, key: int | slice | list | np.ndarray | str):
+        @overload
+        def __getitem__(self, key: int) -> ResultRowClass:
+            pass
+
+        @overload
+        def __getitem__(self, key: slice | list | np.ndarray) -> ResultClass:
+            pass
+
+        @overload
+        def __getitem__(self, key: str) -> u.Quantity | np.ndarray:
+            pass
+
+        def __getitem__(self, key):
             """Get a column or a new result from a row or rows.
 
 
@@ -44,6 +61,11 @@ def make_result(table: Table):
                 * For lists or arrays: returns a new ``Result`` based on the
                   array indexes or boolean selection.
                 * For strings: returns the requested column.
+
+
+            Returns
+            -------
+            data : Result, ResultRow, u.Quantity, np.ndarray
 
             """
 
