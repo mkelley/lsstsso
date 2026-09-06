@@ -5,7 +5,7 @@ from ..expect import expect
 from ..rsp import RSP
 
 
-def phot_by_position(
+def phot_by_positions(
     rsp: RSP,
     coords: SkyCoord,
     tolerance: u.Quantity = 1 * u.arcsec,
