@@ -2,7 +2,13 @@ from logging import getLogger
 from ..rsp import RSP
 
 
-def ssobject(rsp: RSP, constraints: str, columns: list[str] | None = None, cached=True):
+def ssobject(
+    rsp: RSP,
+    constraints: str,
+    columns: list[str] | None = None,
+    cached=True,
+    **kwargs,
+):
     """Query the SSObject and numbered_identifications tables.
 
 
@@ -19,6 +25,8 @@ def ssobject(rsp: RSP, constraints: str, columns: list[str] | None = None, cache
     cached : bool, optional
         ``True`` to cache or return a cached query.
 
+    **kwargs
+        Other keyword arguments are passed to `RSP.query_tap`.
 
     Returns
     -------
@@ -43,9 +51,9 @@ def ssobject(rsp: RSP, constraints: str, columns: list[str] | None = None, cache
     query = f"""
 SELECT {",".join(columns)} FROM dp2.SSObject AS s
 LEFT JOIN dp2.numbered_identifications AS n
-ON unpacked_primary_provisional_designation = designation
+ON n.unpacked_primary_provisional_designation = s.designation
 WHERE {constraints}
 """
     logger.debug(query)
 
-    return rsp.query_tap(query, cache=cached)
+    return rsp.query_tap(query, cache=cached, **kwargs)
