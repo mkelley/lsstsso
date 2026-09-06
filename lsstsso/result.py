@@ -88,7 +88,7 @@ def make_result(table: Table) -> ResultClass:
             return next(iter(lengths))
 
         def __str__(self):
-            return "\n".join(self.as_table().pformat_all())
+            return "\n".join(self.as_table().pformat())
 
         def as_table(self):
             tab = Table(self._asdict())
