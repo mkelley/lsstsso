@@ -35,7 +35,7 @@ def phot_by_position(
     constraints : str, optional
         Other coords constraints.
 
-    columns : list of str
+    columns : list of str, optional
         The columns to return.  The user table columns may be prefixed with
         "coords." and the Source/DiaSource table may be prefixed with "source.",
         e.g., "source.midpointMjdTai", "coords.objid".
@@ -66,10 +66,26 @@ def phot_by_position(
             "source.dec",
             "source.midpointMjdTai",
             "source.band",
-            "source.apFlux",
-            "source.apFluxErr",
+        ]
+
+        if table == "Source":
+            for rap in "12", "17", "25":
+                columns += [
+                    f"source.ap{rap}Flux",
+                    f"source.ap{rap}FluxErr",
+                    f"source.ap{rap}Flux_flag",
+                ]
+        else:
+            columns += [
+                "source.apFlux",
+                "source.apFluxErr",
+                "source.apFlux_flag",
+            ]
+
+        columns += [
             "source.centroid_flag",
             "source.pixelFlags",
+            "source.extendedness",
         ]
 
     query = f"""
