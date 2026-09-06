@@ -1,3 +1,4 @@
+from typing import Callable
 import astropy.units as u
 import numpy as np
 from sbpy.activity import phase_HalleyMarcus
@@ -5,7 +6,52 @@ from sbpy.activity import phase_HalleyMarcus
 from .band import Band
 
 
-def color_scales(m, unc, bands, anchor: Band | str = Band.r):
+def activity(
+    rh: u.Quantity[u.physical.length],
+    delta: u.Quantity[u.physical.length],
+    rh_slope: float,
+    delta_slope: float,
+) -> u.Quantity[u.mag]:
+    """Scale factor (mag) accounting for activity.
+
+    Use this scale factor to transform absolute magnitude into cometary absolute
+    magnitude, Hy.
+
+
+    Parameters
+    ----------
+    rh : Quantity
+        Heliocentric distance.
+
+    delta : Quantity
+        Topocentric distance.
+
+    rh_slope : float
+        Scale by rh**rh_slope.
+
+    delta_slope : float
+        -1 for comets with a 1/rho coma, measured with fixed angular aperture
+        photometry.
+
+
+    Returns
+    -------
+    scale : Quantity
+        Scale factor in magnitudes.
+
+    """
+
+    return -2.5 * np.log10(
+        ((1 * u.au) / rh) ** rh_slope * ((1 * u.au) / delta) ** delta_slope
+    )
+
+
+def color(
+    m: u.Quantity[u.mag],
+    unc: u.Quantity[u.mag],
+    bands: np.ndarray[Band],
+    anchor: Band | str = Band.r,
+):
     """Scale factor (mag) accounting for color.
 
     The scale factors scale ``m`` to the color of ``anchor``.
@@ -13,10 +59,10 @@ def color_scales(m, unc, bands, anchor: Band | str = Band.r):
 
     Parameters
     ----------
-    m : array
-        Apparent magnitudes, already scaled for variations in geometry.
+    m : Quantity
+        Apparent magnitudes.
 
-    unc : array
+    unc : Quantity
         Uncertainties on ``m``.
 
     bands : array of Band
@@ -39,7 +85,10 @@ def color_scales(m, unc, bands, anchor: Band | str = Band.r):
     if anchor not in bands:
         raise ValueError(f"Cannot estimate color for band {anchor}")
 
-    # time averaged apparent magnitude corrected by gemetrical circumstances
+    m = u.Quantity(m, u.mag)
+    unc = u.Quantity(unc, u.mag)
+
+    # averaged apparent magnitude
     avg = {}
     avg_unc = {}
     for band in set(bands):
@@ -69,13 +118,11 @@ def color_scales(m, unc, bands, anchor: Band | str = Band.r):
     return color, color_unc
 
 
-def scale_by_geometry(
-    rh,
-    delta,
-    phase,
-    rh_slope=-4,
-    delta_slope=-1,
-    Phi=phase_HalleyMarcus,
+def geometry(
+    rh: u.Quantity[u.physical.length],
+    delta: u.Quantity[u.physical.length],
+    phase: u.Quantity[u.physical.angle],
+    Phi: Callable = phase_HalleyMarcus,
 ):
     """Scale factor (mag) accounting for geometry.
 
@@ -93,15 +140,8 @@ def scale_by_geometry(
     phase : Quantity
         Phase angle.
 
-    rh_slope : float
-        Scale by rh**rh_slope.
-
-    delta_slope : float
-        Scale by delta**delta_slope.  Usually -1 for comets with fixed angular
-        aperture photometry, -2 any other photometry.
-
     Phi : callable
-        Phase function.
+        Linear phase function.
 
 
     Returns
@@ -111,12 +151,7 @@ def scale_by_geometry(
 
     """
 
-    return (
-        -2.5
-        * np.log10(((1 * u.au) / rh) ** rh_slope * ((1 * u.au) / delta) ** delta_slope)
-        + Phi(0)
-        - Phi(phase)
-    )
+    return -5 * np.log10(rh * delta / u.au**2) + 2.5 * (Phi(phase) / Phi(0))
 
 
 def weighted_mean(x, unc):

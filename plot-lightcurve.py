@@ -5,7 +5,7 @@ import astropy.units as u
 import lsstsso
 import matplotlib.pyplot as plt
 import numpy as np
-from lsstsso import Band, markers, color_scales, scale_by_geometry
+from lsstsso import Band, scale
 from numpy import pi
 
 parser = argparse.ArgumentParser()
@@ -33,8 +33,8 @@ if orbit.e < 0.95:
     a = orbit.q / (1 - orbit.e)
     P = (2 * pi * np.sqrt(a**3 / const.GM_sun)).to("day")
 
-Hy = m + scale_by_geometry(rh, delta, phase)
-color, color_unc = color_scales(Hy, m_unc, bands)
+Hy = m + scale.geometry(rh, delta, phase) + scale.activity(rh, delta, -2, -1)
+color, color_unc = scale.color(Hy, m_unc, bands)
 C = np.array([color[band] for band in bands])
 
 fig, axes = plt.subplots(3, 1, num=1, figsize=(7, 10), clear=True)
@@ -48,7 +48,7 @@ for band in Band:
         markersize=7,
         linestyle="none",
         alpha=0.66,
-        **markers[band],
+        **lsstsso.plot.markers[band],
     )
 
     axes[0].errorbar(tmtp[i], m[i], m_unc[i], label=f"${band}$", **opts)
