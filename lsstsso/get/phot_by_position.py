@@ -84,4 +84,9 @@ def phot_by_position(
 
     logger.debug(query)
 
-    return rsp.query_tap(query, uploads={"coords": coords}, cached=cached)
+    return rsp.query_tap(
+        query,
+        uploads={"coords": coords},
+        cached=cached,
+        units={"query_ra": "deg", "query_dec": "deg"},
+    )

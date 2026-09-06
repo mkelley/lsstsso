@@ -27,7 +27,7 @@ def lightcurve(
 
     """
 
-    logger = getLogger()
+    logger = getLogger("lsstsso")
     logger.info("Querying SSSource INNER JOIN DiaSource")
 
     if columns is None:

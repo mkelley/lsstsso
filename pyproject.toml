@@ -2,14 +2,15 @@
 name = "lsstsso"
 description = "Inspect data of solar system objects observed by LSST"
 readme = "README.md"
-authors = [
-    { name = "Michael S. P. Kelley", email = "msk@astro.umd.edu" }
-]
+authors = [{ name = "Michael S. P. Kelley", email = "msk@astro.umd.edu" }]
 license = { text = "BSD 3-Clause License" }
 dependencies = [
     "astropy>=8",
+    "matplotlib>=3.11",
     "numpy>=2.3",
     "pyvo>=1.8",
+    "sbpy>=0.6",
+    "scipy>=1.17",
 ]
 dynamic = ["version"]
 
@@ -27,4 +28,3 @@ write_to = "lsstsso/_version.py"
 zip-safe = false
 
 [tool.setuptools.packages.find]
-

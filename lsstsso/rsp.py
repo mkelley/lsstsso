@@ -5,6 +5,7 @@ Interact with RSP via API.
 import os
 import hashlib
 import subprocess
+import time
 from glob import glob
 from logging import getLogger
 
@@ -27,7 +28,9 @@ class RSP:
             "https://data.lsst.cloud/api/tap", session=self.session
         )
 
-    def query_tap(self, query: str, cached: bool = True, **kwargs):
+    def query_tap(
+        self, query: str, units: dict[str, str] = {}, cached: bool = True, **kwargs
+    ):
         """Query the RSP TAP endpoint.
 
 
@@ -35,6 +38,9 @@ class RSP:
         ----------
         query : string
             The ADQL query to send.
+
+        units : dict, optional
+            Column-unit pairs: assign these units to each respective column.
 
         cache : bool, optional
             ``True`` to use result cache.
@@ -49,24 +55,30 @@ class RSP:
 
         """
 
-        logger = getLogger()
+        logger = getLogger("lsstsso")
 
         table = self._cached_result(query, cached, **kwargs)
         if table is not None:
             return make_result(table)
 
+        start = time.monotonic()
         job = self.tap_service.submit_job(query, **kwargs)
         job.run()
         job.wait(phases=["COMPLETED", "ERROR"])
         job.raise_if_error()
 
         tap_result = job.fetch_result()
-        logger.info(tap_result.status[0])
+        end = time.monotonic()
+
+        logger.info("%s in %.2f s", tap_result.status[0], end - start)
 
         job.delete()
 
         table = tap_result.to_table()
         table.meta = tap_result.infos
+
+        for col, unit in units.items():
+            table[col].unit = unit
 
         if cached:
             self._cache_query(query, table, **kwargs)
@@ -98,7 +110,7 @@ class RSP:
 
         fn = RSP.cache_file_name(query, **kwargs)
 
-        logger = getLogger()
+        logger = getLogger("lsstsso")
         logger.info(f"Returning cached result from {fn}")
 
         if os.path.exists(fn):

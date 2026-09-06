@@ -1,5 +1,6 @@
 from importlib.metadata import version as _version, PackageNotFoundError
 
+from . import filters  # noqa: F401
 from . import get  # noqa: F401
 from . import logging  # noqa: F401
 from .band import Band  # noqa: F401
