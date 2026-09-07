@@ -7,7 +7,7 @@ from ..result import ResultClass
 
 
 def phot_by_positions(
-    coords: SkyCoord,
+    query: SkyCoord,
     tolerance: u.Quantity = 1 * u.arcsec,
     table: str = "DiaSource",
     constraints: str | None = None,
@@ -19,34 +19,38 @@ def phot_by_positions(
 
     Parameters
     ----------
-
-    coords : Table
+    query : Table
         The coordinates to query as columns "ra" and "dec".  An additional
         "objid" column is optional.  If it exists, it will be automatically
         returned when ``columns`` is ``None``. Other columns may be added and
-        used in the query.  The table will be uploaded as "coords".
+        used in the query.
 
     tolerance : Quantity
-        Query for photometry within ``tolerance`` of ``coords``.
+        Query for photometry within an angular cone of radius ``tolerance``.
 
     table : str
-        The table to query: Source or DiaSource
+        The table to query: "Source" or "DiaSource"
 
     constraints : str, optional
-        Other coords constraints.
+        Other query constraints.  See Notes.
 
     columns : list of str, optional
-        The columns to return.  The user table columns may be prefixed with
-        "coords." and the Source/DiaSource table may be prefixed with "source.",
-        e.g., "source.midpointMjdTai", "coords.objid".
+        The columns to return.  See Notes.
 
     cached : bool, optional
-        ``True`` to cache or return a cached coords.
+        ``True`` to cache or return a cached query.
 
 
     Returns
     -------
     result : Result
+
+
+    Notes
+    -----
+    Within the ADQL command, the user table is named "query" and the
+    Source/DiaSource table is named "source", e.g., "source.midpointMjdTai",
+    "query.objid".
 
     """
 
@@ -55,21 +59,21 @@ def phot_by_positions(
 
     logger = getLogger("lsstsso")
     logger.info(
-        f"Querying {table} for {len(coords)} user coordinates within {tolerance}"
+        f"Querying {table} for {len(query)} user coordinates within {tolerance}"
     )
 
     if columns is None:
-        columns = ["coords.objid AS query_objid"] if "objid" in coords.columns else []
+        columns = ["query.objid AS query_objid"] if "objid" in query.columns else []
         columns += [
-            "coords.ra AS query_ra",
-            "coords.dec AS query_dec",
+            "query.ra AS query_ra",
+            "query.dec AS query_dec",
             "source.ra",
             "source.dec",
-            "source.midpointMjdTai",
             "source.band",
         ]
 
         if table == "Source":
+            columns += ["source.visit", "source.detector"]
             for rap in "12", "17", "25":
                 columns += [
                     f"source.ap{rap}Flux",
@@ -78,6 +82,7 @@ def phot_by_positions(
                 ]
         else:
             columns += [
+                "source.midpointMjdTai",
                 "source.apFlux",
                 "source.apFluxErr",
                 "source.apFlux_flag",
@@ -85,21 +90,20 @@ def phot_by_positions(
 
         columns += [
             "source.centroid_flag",
-            "source.pixelFlags",
             "source.extendedness",
         ]
 
-    query = f"""
+    cmd = f"""
     SELECT {",".join(columns)}
     FROM dp2.{table} AS source
-    JOIN TAP_UPLOAD.coords AS coords
+    JOIN TAP_UPLOAD.query AS query
     ON DISTANCE(POINT('ICRS', source.ra, source.dec),
-                POINT('ICRS', coords.ra, coords.dec)) < {tolerance.to_value(u.deg)}
+                POINT('ICRS', query.ra, query.dec)) < {tolerance.to_value(u.deg)}
     """
     if constraints is not None:
-        query += "WHERE " + constraints
+        cmd += "WHERE " + constraints
 
     logger.debug(query)
 
     with rsp.provider() as _rsp:
-        return _rsp.query_tap(query, uploads={"coords": coords}, cache=cache)
+        return _rsp.query_tap(cmd, uploads={"query": query}, cache=cache)

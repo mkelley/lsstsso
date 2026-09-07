@@ -92,7 +92,7 @@ def make_result(table: Table) -> ResultClass:
 
         def as_table(self):
             tab = Table(self._asdict())
-            if "band" in tab.columns() and isinstance(tab["band"][0], Band):
+            if "band" in tab.columns and isinstance(tab["band"][0], Band):
                 tab["band"] = [str(b) for b in tab["band"]]
             return tab
 
