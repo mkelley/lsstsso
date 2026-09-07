@@ -7,6 +7,56 @@ from astropy.time import Time
 from .result import ResultClass
 
 
+def sky(
+    coords: SkyCoord,
+    result: ResultClass,
+):
+    """Find nearest neighbors on the sky.
+
+
+    Parameters
+    ----------
+    coords : SkyCoord
+        The nominal coordinates of interest.
+
+    result : Result
+        An RSP result.  Columns "ra", "dec", and "midpointMjdTai" will be used.
+
+
+    Returns
+    -------
+    matches : Table
+        A row for each matched coordinate in ``coords`` containing the array
+        index from ``coords``, a copy of the coordinate, the index of the
+        nearest result, the identified nearest result coordinate, and the
+        angular separation.
+
+    """
+
+    if not (set(result.columns()) & {"ra", "dec"}):
+        raise KeyError("ra and/or dec not in result")
+
+    coords_r = SkyCoord(result["ra"], result["dec"])
+
+    matches = []
+    for n, c in enumerate(coords):
+        sep = c.separation(coords_r)
+        d = np.min(sep)
+        nearest = np.argmin(sep)
+
+        matches.append(
+            {
+                "n": n,
+                "coords": coords[n],
+                "nearest": nearest,
+                "nearest coords": coords_r[nearest],
+                "sep": d.to("arcsec"),
+            }
+        )
+
+    return Table(matches)
+
+
 def sky_and_time(
     coords: SkyCoord,
     t: Time,
