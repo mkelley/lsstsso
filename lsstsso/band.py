@@ -3,23 +3,23 @@ Based on ``Bands`` from mskpy, https://doi.org/10.5281/zenodo.17516897, see
 licenses/
 """
 
-from enum import Enum
+from enum import StrEnum
 import astropy.units as u
 
 
-class Band(Enum):
-    u = 0
-    g = 1
-    r = 2
-    i = 3
-    z = 4
-    y = 5
+class Band(StrEnum):
+    u = "u"
+    g = "g"
+    r = "r"
+    i = "i"
+    z = "z"
+    y = "y"
 
     def __eq__(self, band):
         return self.value == band.value
 
     def __hash__(self):
-        return self.value
+        return "ugrizy".index(self.value)
 
     def __lt__(self, band):
         return self.value < band.value
