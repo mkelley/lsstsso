@@ -35,5 +35,12 @@ class Band(StrEnum):
 
     @property
     def wave(self):
-        wavelengths = [372.4, 480.7, 622.1, 755.9, 868.0, 975.3] * u.nm
-        return wavelengths[self.value]
+        wavelengths = {
+            "u": 372.4,
+            "g": 480.7,
+            "r": 622.1,
+            "i": 755.9,
+            "z": 868.0,
+            "y": 975.3,
+        }
+        return wavelengths[self.value] * u.nm

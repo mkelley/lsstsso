@@ -1,4 +1,6 @@
+from itertools import combinations
 from typing import Callable
+
 import astropy.units as u
 import numpy as np
 from sbpy.activity import phase_HalleyMarcus
@@ -79,11 +81,7 @@ def color(
 
     """
 
-    if isinstance(anchor, str):
-        anchor = Band[anchor]
-
-    if anchor not in bands:
-        raise ValueError(f"Cannot estimate color for band {anchor}")
+    anchor = Band(anchor)
 
     m = u.Quantity(m, u.mag)
     unc = u.Quantity(unc, u.mag)
