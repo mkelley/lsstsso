@@ -4,6 +4,7 @@ description = "Inspect data of solar system objects observed by LSST"
 readme = "README.md"
 authors = [{ name = "Michael S. P. Kelley", email = "msk@astro.umd.edu" }]
 license = { text = "BSD 3-Clause License" }
+requires-python = ">=3.12"
 dependencies = [
     "astropy>=8",
     "matplotlib>=3.11",
