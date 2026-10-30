@@ -22,10 +22,10 @@ class Band(StrEnum):
         return "ugrizy".index(self.value)
 
     def __lt__(self, band):
-        return self.value < band.value
+        return self.wave < band.wave
 
     def __gt__(self, band):
-        return self.value > band.value
+        return self.wave > band.wave
 
     def __repr__(self):
         return f"<Band: {self}, {self.wave}>"
