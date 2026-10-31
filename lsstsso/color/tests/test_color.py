@@ -6,22 +6,22 @@ from ...band import Band
 
 def test_init():
     c = Color(Band.u, Band.g, 1.0, 0.1)
-    assert c.blue == Band.u
-    assert c.red == Band.g
+    assert c.left == Band.u
+    assert c.right == Band.g
     assert u.isclose(c.index, 1.0 * u.mag)
     assert u.isclose(c.unc, 0.1 * u.mag)
 
     # strings are OK
     c = Color("r", "g", -1.0, 0.1)
-    assert c.blue == Band.g
-    assert c.red == Band.r
-    assert u.isclose(c.index, 1.0 * u.mag)
+    assert c.left == Band.r
+    assert c.right == Band.g
+    assert u.isclose(c.index, -1.0 * u.mag)
     assert u.isclose(c.unc, 0.1 * u.mag)
 
     c = Color("r", "g", [1, 2, 3], [0.1, 0.2, 0.3])
-    assert c.blue == Band.g
-    assert c.red == Band.r
-    assert u.allclose(c.index, [-1, -2, -3] * u.mag)
+    assert c.left == Band.r
+    assert c.right == Band.g
+    assert u.allclose(c.index, [1, 2, 3] * u.mag)
     assert u.allclose(c.unc, [0.1, 0.2, 0.3] * u.mag)
 
 
@@ -36,7 +36,7 @@ def test_str():
 def test_mean():
     c = Color("g", "r", [0.4, 0.45] * u.mag, [0.1, 0.05] * u.mag)
     m = c.mean()
-    assert m.blue == Band.g
-    assert m.red == Band.r
+    assert m.left == Band.g
+    assert m.right == Band.r
     assert u.isclose(m.index, 0.44 * u.mag)
     assert u.isclose(m.unc, 0.044721359549995794 * u.mag)

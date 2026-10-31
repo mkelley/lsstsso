@@ -6,17 +6,18 @@ from . import logging
 from . import rsp
 from . import scale
 from .band import Band
-from .color import Color, ColorMatrix
+from .color import Color, ColorMatrix, transform
 
 __all__ = [
+    "Band",
+    "Color",
+    "ColorMatrix",
     "filters",
     "get",
     "logging",
     "rsp",
     "scale",
-    "Band",
-    "Color",
-    "ColorMatrix",
+    "transform",
 ]
 
 try:

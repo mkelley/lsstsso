@@ -45,6 +45,18 @@ def test_init():
     assert np.ma.allclose(cm.unc, expected)
 
 
+def test_getitem():
+    colors = [Color(Band.u, Band.g, 1.0, 0.2)]
+
+    cm = ColorMatrix(colors, fill=False)
+
+    c = cm["u", "g"]
+    assert c.left == Band.u
+    assert c.right == Band.g
+    assert u.isclose(c.index, 1.0 * u.mag)
+    assert u.isclose(c.unc, 0.2 * u.mag)
+
+
 def test_fill():
     colors = [
         Color(Band.u, Band.g, 1, 0.1),

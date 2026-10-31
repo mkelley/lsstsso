@@ -13,9 +13,8 @@ class Color:
 
     Parameters
     ----------
-    blue, red : Band
-        The bandpasses for the measurement.  If `blue` is actually the redder of
-        the two filters, they will be swapped and the value negated.
+    left, right : Band
+        The bandpasses for the measurement.
 
     index, unc : u.Quantity
         The color measurement and uncertainty in units of mag.  May be arrays.
@@ -33,21 +32,17 @@ class Color:
 
     """
 
-    blue: Band
-    red: Band
+    left: Band
+    right: Band
     index: u.Quantity
     unc: u.Quantity
 
     def __post_init__(self) -> None:
         # normalize inputs
-        self.blue = Band(self.blue)
-        self.red = Band(self.red)
+        self.left = Band(self.left)
+        self.right = Band(self.right)
         self.index = u.Quantity(self.index, u.mag)
         self.unc = u.Quantity(self.unc, u.mag)
-
-        if self.blue > self.red:
-            self.blue, self.red = self.red, self.blue
-            self.index = -self.index
 
     def __repr__(self) -> str:
         if np.size(self.index) > 1:
@@ -55,7 +50,7 @@ class Color:
             n = len(self.index)
             return f"<Color {s} (mean of {n} points)>"
 
-        return f"<Color {self.blue}-{self.red} = {self.index.value:0.3f} ± {self.unc.value:0.3f} mag>"
+        return f"<Color {self.left}-{self.right} = {self.index.value:0.3f} ± {self.unc.value:0.3f} mag>"
 
     def __str__(self) -> str:
         return repr(self)[7:-1]
@@ -71,4 +66,4 @@ class Color:
         """
 
         m, sw = np.average(self.index, weights=self.unc**-2, returned=True)
-        return Color(self.blue, self.red, m, sw ** -(1 / 2))
+        return Color(self.left, self.right, m, sw ** -(1 / 2))

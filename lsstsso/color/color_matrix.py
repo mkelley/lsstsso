@@ -1,10 +1,3 @@
-# def print_color_matrix(color_matrix: np.ma.MaskedArray, **kwargs):
-#     with np.printoptions(formatter={"float": "{:+0.3f}".format}):
-#         s = str(color_matrix.filled(np.nan))
-
-#     s = s.replace("nan", " --- ").replace("+", " ")
-#     print(s, **kwargs)
-
 """
 
 The color transformation matrix:
@@ -47,8 +40,8 @@ y-r = g-r + y-g
 
 from itertools import combinations
 
-import astropy.units as u
 import numpy as np
+from numpy.ma.core import MaskedConstant
 
 from .color import Color
 from ..band import Band
@@ -100,8 +93,8 @@ class ColorMatrix:
         weights = np.zeros_like(self.index)
         count = np.zeros(self.index.shape, int)
         for color in colors:
-            i = list(Band).index(color.blue)
-            j = list(Band).index(color.red)
+            i = list(Band).index(color.left)
+            j = list(Band).index(color.right)
 
             weights[i, j] = color.unc.value**-2
             self.index[i, j] += color.index.value * weights[i, j]
@@ -134,14 +127,18 @@ class ColorMatrix:
         for i, j in combinations(range(6), 2):
             print(Color(list(Band)[i], list(Band)[j], self.index[i, j], self.unc[i, j]))
 
-    def __get_item__(
-        self, a: Band | str, b: Band | str
-    ) -> tuple[u.Quantity, u.Quantity]:
-        """a - b color index and uncertainty."""
-        i = list(Band).index(Band(a))
-        j = list(Band).index(Band(b))
+    def __getitem__(
+        self, bands: tuple[Band | str, Band | str]
+    ) -> Color | MaskedConstant:
+        """a - b color."""
+        a, b = [Band(x) for x in bands]
+        i = list(Band).index(a)
+        j = list(Band).index(b)
 
-        return self.index[i, j], self.unc[i, j]
+        if self.index[i, j] is np.ma.masked:
+            return np.ma.masked
+
+        return Color(a, b, self.index[i, j], self.unc[i, j])
 
     def fill(self):
         """Fill in missing transformations that can be calculated."""
@@ -169,11 +166,6 @@ class ColorMatrix:
                 # chose the lowest uncertainty
                 k = np.argmin(unc)
                 new_colors.append((i, j, colors[k], unc[k]))
-
-                # # average them together
-                # c, sw = np.average(colors, weights=np.array(var) ** -1, returned=True)
-                # cu = sw**-0.5
-                # new_colors.append((i, j, c, cu))
 
             if len(new_colors) == 0:
                 break
