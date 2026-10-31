@@ -93,11 +93,20 @@ class ColorMatrix:
         weights = np.zeros_like(self.index)
         count = np.zeros(self.index.shape, int)
         for color in colors:
+            if np.size(color.index) > 1:
+                color = color.mean()
+
             i = list(Band).index(color.left)
             j = list(Band).index(color.right)
 
-            weights[i, j] = color.unc.value**-2
-            self.index[i, j] += color.index.value * weights[i, j]
+            weight = color.unc.value**-2
+            if i < j:
+                self.index[i, j] += color.index.value * weight
+                weights[i, j] += weight
+            else:
+                self.index[j, i] += -color.index.value * weight
+                weights[j, i] += weight
+
             count[i, j] += 1
             count[j, i] += 1
 

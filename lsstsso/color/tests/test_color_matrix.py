@@ -45,6 +45,30 @@ def test_init():
     assert np.ma.allclose(cm.unc, expected)
 
 
+def test_init_averaging():
+    colors = [
+        Color(Band.u, Band.g, 1.0, 0.2),
+        Color(Band.u, Band.g, 0.8, 0.2),
+        Color(Band.g, Band.r, 1.2, 0.02),
+        Color(Band.r, Band.g, -1.4, 0.02),
+        Color(Band.u, Band.i, [0.8, 0.6], [0.1, 0.1]),
+    ]
+
+    cm = ColorMatrix(colors, fill=False)
+
+    color = cm["u", "g"]
+    assert u.isclose(color.index, 0.9 * u.mag)
+    assert u.isclose(color.unc, np.hypot(0.2, 0.2) / 2 * u.mag)
+
+    color = cm["g", "r"]
+    assert u.isclose(color.index, 1.3 * u.mag)
+    assert u.isclose(color.unc, np.hypot(0.02, 0.02) / 2 * u.mag)
+
+    color = cm["u", "i"]
+    assert u.isclose(color.index, 0.7 * u.mag)
+    assert u.isclose(color.unc, np.hypot(0.1, 0.1) / 2 * u.mag)
+
+
 def test_getitem():
     colors = [Color(Band.u, Band.g, 1.0, 0.2)]
 
