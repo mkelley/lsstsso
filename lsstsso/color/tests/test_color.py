@@ -1,17 +1,17 @@
 import astropy.units as u
-import numpy as np
 
 from ..color import Color
 from ...band import Band
 
 
 def test_init():
-    c = Color("u", "g", 1.0, 0.1)
+    c = Color(Band.u, Band.g, 1.0, 0.1)
     assert c.blue == Band.u
     assert c.red == Band.g
     assert u.isclose(c.index, 1.0 * u.mag)
     assert u.isclose(c.unc, 0.1 * u.mag)
 
+    # strings are OK
     c = Color("r", "g", -1.0, 0.1)
     assert c.blue == Band.g
     assert c.red == Band.r

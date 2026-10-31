@@ -45,7 +45,7 @@ y-r = g-r + y-g
 
 """
 
-from itertools import combinations, product
+from itertools import combinations
 
 import astropy.units as u
 import numpy as np
@@ -94,39 +94,54 @@ class ColorMatrix:
     """
 
     def __init__(self, colors: list[Color], fill: bool = True):
-        self.value = np.ma.zeros((6, 6))
-        self.unc = np.zeros_like(self.value)
+        self.index = np.ma.zeros((6, 6))
+        self.unc = np.zeros_like(self.index)
 
-        weights = np.zeros_like(self.value)
+        weights = np.zeros_like(self.index)
+        count = np.zeros(self.index.shape, int)
         for color in colors:
             i = list(Band).index(color.blue)
             j = list(Band).index(color.red)
 
-            weights[i, j] = color.unc**-2
-            self.value[i, j] += color.index * weights[i, j]
+            weights[i, j] = color.unc.value**-2
+            self.index[i, j] += color.index.value * weights[i, j]
+            count[i, j] += 1
+            count[j, i] += 1
 
         # average, as appropriate, and fill in the lower triangle
         for i, j in combinations(range(6), 2):
-            if weights[i, j] == 0:
+            if count[i, j] == 0:
                 continue
 
-            self.value[i, j] /= color.unc
+            self.index[i, j] /= weights[i, j]
             self.unc[i, j] = 1 / np.sqrt(weights[i, j])
 
-            self.value[j, i] = -self.value[i, j]
-            self.unc[j, i] = self.unc[j, i]
+            self.index[j, i] = -self.index[i, j]
+            self.unc[j, i] = self.unc[i, j]
 
         # mask empty colors
-        self.value[self.value == 0] = np.ma.masked
-        self.unc[self.value == 0] = np.ma.masked
+        self.index.mask = count == 0
+        self.unc.mask = self.index.mask
+
+        if fill:
+            self.fill()
 
     def __repr__(self):
-        n = np.sum(~np.triu(self.value).mask)
+        n = np.sum(~np.triu(self.index).mask)
         return f"<ColorMatrix {n} values>"
 
     def __str__(self):
         for i, j in combinations(range(6), 2):
-            print(Color(list(Band)[i], list(Band)[j], self.value[i, j], self.unc[i, j]))
+            print(Color(list(Band)[i], list(Band)[j], self.index[i, j], self.unc[i, j]))
+
+    def __get_item__(
+        self, a: Band | str, b: Band | str
+    ) -> tuple[u.Quantity, u.Quantity]:
+        """a - b color index and uncertainty."""
+        i = list(Band).index(Band(a))
+        j = list(Band).index(Band(b))
+
+        return self.index[i, j], self.unc[i, j]
 
     def fill(self):
         """Fill in missing transformations that can be calculated."""
@@ -136,32 +151,38 @@ class ColorMatrix:
             new_colors = []
             for i, j in combinations(range(6), 2):
                 # already measured?
-                if self.value[i, j] is not np.ma.masked:
+                if self.index[i, j] is not np.ma.masked:
                     continue
 
                 # OK blue-red is missing, now find what we can calculate it from, single
                 # steps only
                 colors = []
-                var = []
-                for band in set(range(6)) - set([i, j]):
-                    if not self.value.mask[i, band] and not self.value.mask[band, j]:
-                        colors.append(self.value[i, band] + self.value[band, j])
-                        var.append(self.unc[i, band] ** 2 + self.unc[band, j] ** 2)
+                unc = []
+                for band in set(range(6)) - set((i, j)):
+                    if not self.index.mask[i, band] and not self.index.mask[band, j]:
+                        colors.append(self.index[i, band] + self.index[band, j])
+                        unc.append(np.hypot(self.unc[i, band], self.unc[band, j]))
 
                 if len(colors) == 0:
                     continue
 
-                # average them together
-                c, sw = np.average(colors, weights=np.array(var) ** -1, returned=True)
-                cu = sw**-0.5
-                new_colors[(i, j)] = c, cu
-                new_colors[(j, i)] = -c, cu
+                # chose the lowest uncertainty
+                k = np.argmin(unc)
+                new_colors.append((i, j, colors[k], unc[k]))
+
+                # # average them together
+                # c, sw = np.average(colors, weights=np.array(var) ** -1, returned=True)
+                # cu = sw**-0.5
+                # new_colors.append((i, j, c, cu))
 
             if len(new_colors) == 0:
                 break
 
             # save updating for last to avoid propagating newly calculated colors in
             # the current iteration
-            for (i, j), (value, unc) in new_colors.items():
-                self.value[i, j] = value
+            for i, j, value, unc in new_colors:
+                self.index[i, j] = value
                 self.unc[i, j] = unc
+
+                self.index[j, i] = -value
+                self.unc[j, i] = unc
