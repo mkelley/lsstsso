@@ -88,7 +88,7 @@ class ColorMatrix:
 
     def __init__(self, colors: list[Color], fill: bool = True):
         self.index = np.ma.zeros((6, 6))
-        self.unc = np.zeros_like(self.index)
+        self.unc = np.ma.zeros_like(self.index)
 
         weights = np.zeros_like(self.index)
         count = np.zeros(self.index.shape, int)
@@ -129,12 +129,19 @@ class ColorMatrix:
             self.fill()
 
     def __repr__(self):
-        n = np.sum(~np.triu(self.index).mask)
-        return f"<ColorMatrix {n} values>"
+        n = np.sum(~np.triu(self.index.mask))
+        return f"<ColorMatrix: {n} values>"
 
     def __str__(self):
+        lines = []
         for i, j in combinations(range(6), 2):
-            print(Color(list(Band)[i], list(Band)[j], self.index[i, j], self.unc[i, j]))
+            if self.index[i, j] is np.ma.masked:
+                continue
+            color = Color(
+                list(Band)[i], list(Band)[j], self.index[i, j], self.unc[i, j]
+            )
+            lines.append(str(color))
+        return "\n".join(lines)
 
     def __getitem__(
         self, bands: tuple[Band | str, Band | str]
