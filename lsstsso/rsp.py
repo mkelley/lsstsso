@@ -137,8 +137,7 @@ class RSP:
         table.write(fn, format="ascii.ecsv", overwrite=True)
 
 
-rsp = RSP()
-
+rsp = None
 
 @contextmanager
 def provider(refresh=False):
@@ -155,7 +154,7 @@ def provider(refresh=False):
 
     global rsp
 
-    if refresh:
+    if refresh or rsp is None:
         rsp = RSP()
 
     yield rsp
