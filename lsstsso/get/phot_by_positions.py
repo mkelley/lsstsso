@@ -1,9 +1,64 @@
 from logging import getLogger
+
 import astropy.units as u
 from astropy.coordinates import SkyCoord
 
 from .. import rsp
 from ..result import ResultClass
+
+source_default_columns = [
+    "ra",
+    "dec",
+    "band",
+    "visit",
+    "detector",
+    "sourceId",
+    "psfFlux",
+    "psfFluxErr",
+    "psfFlux_flag",
+    "ap12Flux",
+    "ap12FluxErr",
+    "ap12Flux_flag",
+    "ap17Flux",
+    "ap17FluxErr",
+    "ap17Flux_flag",
+    "ap25Flux",
+    "ap25FluxErr",
+    "ap25Flux_flag",
+    "ixx",
+    "iyy",
+    "ixxPSF",
+    "iyyPSF",
+    "centroid_flag",
+    "reliability",
+    "extendedness",
+]
+
+diaSource_default_columns = [
+    "ra",
+    "dec",
+    "band",
+    "diaSourceId",
+    "ssObjectId",
+    "midpointMjdTai",
+    "psfFlux",
+    "psfFluxErr",
+    "psfFlux_flag",
+    "trailFlux",
+    "trailFluxErr",
+    "trailLength",
+    "trailAngle",
+    "apFlux",
+    "apFluxErr",
+    "apFlux_flag",
+    "ixx",
+    "iyy",
+    "ixxPSF",
+    "iyyPSF",
+    "centroid_flag",
+    "reliability",
+    "extendedness",
+]
 
 
 def phot_by_positions(
@@ -67,48 +122,14 @@ def phot_by_positions(
         columns += [
             "query.ra AS query_ra",
             "query.dec AS query_dec",
-            "source.ra",
-            "source.dec",
-            "source.band",
         ]
 
         if table == "Source":
-            columns += [
-                "source.visit",
-                "source.detector",
-                "source.sourceId",
-                "source.psfFlux",
-                "source.psfFluxErr",
-                "source.psfFlux_flag",
-            ]
-            for rap in "12", "17", "25":
-                columns += [
-                    f"source.ap{rap}Flux",
-                    f"source.ap{rap}FluxErr",
-                    f"source.ap{rap}Flux_flag",
-                ]
+            default_columns = source_default_columns
         else:
-            columns += [
-                "source.diaSourceId",
-                "source.ssObjectId",
-                "source.midpointMjdTai",
-                "source.psfFlux",
-                "source.psfFluxErr",
-                "source.psfFlux_flag",
-                "source.trailFlux",
-                "source.trailFluxErr",
-                "source.trailLength",
-                "source.trailAngle",
-                "source.apFlux",
-                "source.apFluxErr",
-                "source.apFlux_flag",
-            ]
+            default_columns = diaSource_default_columns
 
-        columns += [
-            "source.centroid_flag",
-            "source.reliability",
-            "source.extendedness",
-        ]
+        columns += [f"source.{col}" for col in default_columns]
 
     cmd = f"""
     SELECT {",".join(columns)}
