@@ -112,19 +112,19 @@ def sky_and_time(
             continue
 
         sep = c.separation(coords_r[i])
-        n = np.argmin(sep)
-        nearest_index = np.flatnonzero(i)[np.argmin(sep)]
-        nearest_sep = sep[n]
-        nearest_pa = c.position_angle(coords_r[i][n])
+        nearest = np.argmin(sep)
+        nearest_sep = sep[nearest]
+        nearest_pa = c.position_angle(coords_r[i][nearest])
+        nearest_result_index = np.flatnonzero(i)[nearest]
 
         matches.append(
             {
                 "n": n,
-                "coords": coords[n],
+                "coords": c,
                 "t": t[n],
-                "nearest": nearest_index,
-                "nearest coords": coords_r[nearest_index],
-                "dt": dt[nearest_index],
+                "nearest": nearest_result_index,
+                "nearest coords": coords_r[nearest_result_index],
+                "dt": dt[nearest_result_index],
                 "sep": nearest_sep.to("arcsec"),
                 "pa": nearest_pa.to("deg"),
             }
