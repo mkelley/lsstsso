@@ -73,7 +73,14 @@ def phot_by_positions(
         ]
 
         if table == "Source":
-            columns += ["source.visit", "source.detector"]
+            columns += [
+                "source.visit",
+                "source.detector",
+                "source.sourceId",
+                "source.psfFlux",
+                "source.psfFluxErr",
+                "source.psfFlux_flag",
+            ]
             for rap in "12", "17", "25":
                 columns += [
                     f"source.ap{rap}Flux",
@@ -82,7 +89,16 @@ def phot_by_positions(
                 ]
         else:
             columns += [
+                "source.diaSourceId",
+                "source.ssObjectId",
                 "source.midpointMjdTai",
+                "source.psfFlux",
+                "source.psfFluxErr",
+                "source.psfFlux_flag",
+                "source.trailFlux",
+                "source.trailFluxErr",
+                "source.trailLength",
+                "source.trailAngle",
                 "source.apFlux",
                 "source.apFluxErr",
                 "source.apFlux_flag",
@@ -90,6 +106,7 @@ def phot_by_positions(
 
         columns += [
             "source.centroid_flag",
+            "source.reliability",
             "source.extendedness",
         ]
 
