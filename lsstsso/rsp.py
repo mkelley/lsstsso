@@ -14,7 +14,7 @@ import pyvo as vo
 from astropy.table import Table
 from pyvo.auth import AuthSession
 
-from .result import make_result
+from .result import Result
 
 
 class RSP:
@@ -64,7 +64,7 @@ class RSP:
 
         table = self._cached_result(query, cache, **kwargs)
         if table is not None:
-            return make_result(table)
+            return Result(table)
 
         start = time.monotonic()
         job = self.tap_service.submit_job(query, **kwargs)
@@ -87,7 +87,7 @@ class RSP:
         if cache:
             self._cache_query(query, table, **kwargs)
 
-        return make_result(table)
+        return Result(table)
 
     @staticmethod
     def clean_cache(max_age: float = 0):
