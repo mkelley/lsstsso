@@ -5,6 +5,8 @@ import numpy as np
 from astropy.time import Time
 
 from .band import Band
+from .color.color_matrix import ColorMatrix
+from .color.transform import transform
 
 markers = {
     Band.u: {
@@ -34,18 +36,25 @@ markers = {
 }
 
 
-def color_to_labels(anchor: Band, color: dict[Band, float]):
+def colors_to_labels(anchor: Band, cm: ColorMatrix | None):
     labels = {}
 
     for band in Band:
-        if band < anchor:
-            label = f"${band}{color[band]:+.2f}$"
-        elif band == anchor:
-            label = "${band}$"
+        if cm is None or band == anchor:
+            color = None
         else:
-            label = f"${band}{color[band]:+.2f}$"
+            try:
+                color, _ = transform(0 * u.mag, 0 * u.mag, band, anchor, cm)
+                color = color.value
+            except ValueError:
+                color = None
 
-        labels[band] = label
+        if color is None or band == anchor:
+            label = f"${band}$"
+        else:
+            label = f"${band}{color:+.2f}$"
+
+        labels[band] = {"label": label}
 
     return labels
 
@@ -55,6 +64,8 @@ def lightcurve(
     m: u.Quantity,
     unc: u.Quantity,
     bands: np.ndarray[Band],
+    anchor: Band | str = Band.r,
+    cm: ColorMatrix | None = None,
     ax: mpl.axes.Axes = None,
     labels: dict[Band, str] | None = None,
     **kwargs,
@@ -64,14 +75,7 @@ def lightcurve(
     if ax is None:
         ax = plt.gca()
 
-    labels = {
-        Band.u: {"label": "$u$"},
-        Band.g: {"label": "$g$"},
-        Band.r: {"label": "$r$"},
-        Band.i: {"label": "$i$"},
-        Band.z: {"label": "$z$"},
-        Band.y: {"label": "$y$"},
-    }
+    labels = colors_to_labels(Band(anchor), cm)
 
     default_opts = {
         "markersize": 7,
@@ -86,4 +90,8 @@ def lightcurve(
 
         opts = default_opts | markers[band] | labels[band] | kwargs
 
-        ax.errorbar(t[i], m[i], unc[i], **opts)
+        if cm is None or band == anchor:
+            ax.errorbar(t[i], m[i], unc[i], **opts)
+        else:
+            a, aunc = transform(m[i], unc[i], band, anchor, cm)
+            ax.errorbar(t[i], a, aunc, **opts)
