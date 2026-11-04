@@ -2,8 +2,8 @@
 Interact with RSP via API.
 """
 
-import os
 import hashlib
+import os
 import subprocess
 import time
 from contextlib import contextmanager
@@ -30,7 +30,11 @@ class RSP:
         )
 
     def query_tap(
-        self, query: str, units: dict[str, str] = {}, cache: bool = True, **kwargs
+        self,
+        query: str,
+        units: dict[str, str] | None = None,
+        cache: bool = True,
+        **kwargs,
     ):
         """Query the RSP TAP endpoint.
 
@@ -77,6 +81,8 @@ class RSP:
 
         table = tap_result.to_table()
         table.meta = tap_result.infos
+        for col, unit in units if units else {}:
+            table[col].unit = unit
 
         if cache:
             self._cache_query(query, table, **kwargs)
@@ -138,6 +144,7 @@ class RSP:
 
 
 rsp = None
+
 
 @contextmanager
 def provider(refresh=False):

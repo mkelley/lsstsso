@@ -4,7 +4,7 @@ import astropy.units as u
 from astropy.coordinates import SkyCoord
 
 from .. import rsp
-from ..result import ResultClass
+from ..result import Result
 
 source_default_columns = [
     "ra",
@@ -68,7 +68,7 @@ def phot_by_positions(
     constraints: str | None = None,
     columns: list[str] | None = None,
     cache=True,
-) -> ResultClass:
+) -> Result:
     """Query the Source or DiaSource tables for photometry near coordinates.
 
 

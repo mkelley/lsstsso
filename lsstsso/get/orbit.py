@@ -1,11 +1,10 @@
 from logging import getLogger
+
 from .. import rsp
-from ..result import ResultClass
+from ..result import Result
 
 
-def orbit(
-    constraints: str, columns: list[str] | None = None, cached=True
-) -> ResultClass:
+def orbit(constraints: str, columns: list[str] | None = None, cached=True) -> Result:
     """Query the mpc_orbit table.
 
 

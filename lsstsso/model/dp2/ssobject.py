@@ -1,5 +1,7 @@
 from dataclasses import dataclass
+
 import astropy.units as u
+
 from ..table import RSPTable
 
 

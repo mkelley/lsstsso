@@ -1,10 +1,10 @@
 import astropy.units as u
 import numpy as np
 
+from ...band import Band
 from ..color import Color
 from ..color_matrix import ColorMatrix
 from ..transform import transform
-from ...band import Band
 
 
 def test_transform():

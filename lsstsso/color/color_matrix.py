@@ -173,7 +173,7 @@ class ColorMatrix:
                 # steps only
                 colors = []
                 unc = []
-                for band in set(range(6)) - set((i, j)):
+                for band in set(range(6)) - {i, j}:
                     if not self.index.mask[i, band] and not self.index.mask[band, j]:
                         colors.append(self.index[i, band] + self.index[band, j])
                         unc.append(np.hypot(self.unc[i, band], self.unc[band, j]))

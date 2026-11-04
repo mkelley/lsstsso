@@ -1,6 +1,7 @@
 from logging import getLogger
+
 from .. import rsp
-from ..result import ResultClass
+from ..result import Result
 
 
 def ssobject(
@@ -8,7 +9,7 @@ def ssobject(
     columns: list[str] | None = None,
     cached=True,
     **kwargs,
-) -> ResultClass:
+) -> Result:
     """Query the SSObject and numbered_identifications tables.
 
 

@@ -4,6 +4,7 @@ licenses/
 """
 
 from enum import StrEnum
+
 import astropy.units as u
 
 

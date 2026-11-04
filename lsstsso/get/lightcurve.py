@@ -1,11 +1,12 @@
 from logging import getLogger
-from ..result import ResultClass
+
 from .. import rsp
+from ..result import Result
 
 
 def lightcurve(
     ssobjectid: int, columns: list[str] | None = None, cached=True
-) -> ResultClass:
+) -> Result:
     """Query the SSSource and DiaSource tables for photometry of an object.
 
 

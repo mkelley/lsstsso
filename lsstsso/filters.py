@@ -1,15 +1,15 @@
-import numpy as np
 import astropy.units as u
+import numpy as np
 from astropy.coordinates import SkyCoord
 from astropy.table import Table
 from astropy.time import Time
 
-from .result import ResultClass
+from .result import Result
 
 
 def sky(
     coords: SkyCoord,
-    result: ResultClass,
+    result: Result,
 ):
     """Find nearest neighbors on the sky.
 
@@ -47,7 +47,7 @@ def sky(
         matches.append(
             {
                 "n": n,
-                "coords": coords[n],
+                "coords": c,
                 "nearest": nearest,
                 "nearest coords": coords_r[nearest],
                 "sep": d.to("arcsec"),
@@ -61,7 +61,7 @@ def sky_and_time(
     coords: SkyCoord,
     t: Time,
     tol: u.Quantity,
-    result: ResultClass,
+    result: Result,
 ):
     """Find nearest neighbors on the sky and within a time tolerance.
 

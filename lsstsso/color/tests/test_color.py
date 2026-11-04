@@ -1,7 +1,7 @@
 import astropy.units as u
 
-from ..color import Color
 from ...band import Band
+from ..color import Color
 
 
 def test_init():

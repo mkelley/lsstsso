@@ -1,10 +1,7 @@
-from importlib.metadata import version as _version, PackageNotFoundError
+from importlib.metadata import PackageNotFoundError
+from importlib.metadata import version as _version
 
-from . import filters
-from . import get
-from . import logging
-from . import rsp
-from . import scale
+from . import filters, get, logging, rsp, scale
 from .band import Band
 from .color import Color, ColorMatrix, transform
 

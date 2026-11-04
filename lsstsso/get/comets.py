@@ -1,8 +1,8 @@
+from ..result import Result
 from .ssobject import ssobject
-from ..result import ResultClass
 
 
-def comets(columns: list[str] | None = None, cached=True) -> ResultClass:
+def comets(columns: list[str] | None = None, cached=True) -> Result:
     """Get a list of all SSObjects with cometary designations.
 
 

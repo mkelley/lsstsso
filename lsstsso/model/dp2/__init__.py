@@ -16,3 +16,5 @@ Convered from schemas at sdm-schemas.lsst.io/dp2.html
 from .diasource import DiaSource
 from .ssobject import SSObject
 from .sssource import SSSource
+
+__all__ = ["DiaSource", "SSObject", "SSSource"]

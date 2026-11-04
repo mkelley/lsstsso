@@ -8,11 +8,11 @@ from astropy.time import Time
 
 from .band import Band
 
-ResultClass = TypeVar("Result")
-ResultRowClass = TypeVar("ResultRow")
+Result = TypeVar("Result")
+ResultRow = TypeVar("ResultRow")
 
 
-def make_result(table: Table) -> ResultClass:
+def make_result(table: Table) -> Result:
     """Convert a table into a convenient ``Result`` object.
 
 
@@ -38,11 +38,11 @@ def make_result(table: Table) -> ResultClass:
         __slots__ = ()
 
         @overload
-        def __getitem__(self, key: int) -> ResultRowClass:
+        def __getitem__(self, key: int) -> ResultRow:
             pass
 
         @overload
-        def __getitem__(self, key: slice | list | np.ndarray) -> ResultClass:
+        def __getitem__(self, key: slice | list | np.ndarray) -> Result:
             pass
 
         @overload

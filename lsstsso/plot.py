@@ -1,7 +1,7 @@
 import astropy.units as u
-import numpy as np
 import matplotlib as mpl
 import matplotlib.pyplot as plt
+import numpy as np
 from astropy.time import Time
 
 from .band import Band
@@ -56,7 +56,7 @@ def lightcurve(
     unc: u.Quantity,
     bands: np.ndarray[Band],
     ax: mpl.axes.Axes = None,
-    labels: dict[Band, str] = None,
+    labels: dict[Band, str] | None = None,
     **kwargs,
 ):
     """Plot a lightcurve in magnitudes."""
