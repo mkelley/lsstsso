@@ -2,9 +2,9 @@ import astropy.units as u
 import numpy as np
 from numpy.linalg import norm
 
+from ...band import Band
 from ..color import Color
 from ..color_matrix import ColorMatrix
-from ...band import Band
 
 
 def test_init():
@@ -239,3 +239,23 @@ def test_fill():
     )
     expected[expected == 0] = np.ma.masked
     assert np.ma.allclose(cm.unc, expected)
+
+
+def test_read_write(tmp_path):
+    colors = [
+        Color(Band.u, Band.g, 1.0, 0.2),
+        Color(Band.g, Band.i, 1.3, 0.1),
+        Color(Band.g, Band.y, 0.25, 0.055),
+        Color(Band.r, Band.i, 0.2, 0.05),
+        Color(Band.z, Band.y, 0.11, 0.01),
+    ]
+    cm0 = ColorMatrix(colors, fill=False)
+    cm0.write(tmp_path / "color_matrix.ecsv")
+
+    cm = ColorMatrix.read(tmp_path / "color_matrix.ecsv")
+
+    assert np.allclose(cm.index.data, cm0.index.data)
+    assert np.all(cm.index.mask == cm0.index.mask)
+
+    assert np.allclose(cm.unc.data, cm0.unc.data)
+    assert np.all(cm.unc.mask == cm0.unc.mask)
