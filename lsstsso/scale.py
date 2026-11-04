@@ -119,6 +119,8 @@ def geometry(
     rh: u.Quantity[u.physical.length],
     delta: u.Quantity[u.physical.length],
     phase: u.Quantity[u.physical.angle],
+    activity_slope: float = 0,
+    delta_slope: float = -1,
     Phi: Callable = phase_HalleyMarcus,
 ):
     """Scale factor (mag) accounting for geometry.
@@ -137,6 +139,12 @@ def geometry(
     phase : Quantity
         Phase angle.
 
+    activity_slope : int or float
+        Power-law slope for activity scale factor with rh.
+
+    delta_slope : int or float
+        Power-law slope for delta, e.g., -1 for comae, or -2 for nuclei.
+
     Phi : callable
         Linear phase function.
 
@@ -148,7 +156,11 @@ def geometry(
 
     """
 
-    return -5 * np.log10(rh * delta / u.au**2) + 2.5 * (Phi(phase) / Phi(0))
+    return (
+        (-5 + 2.5 * activity_slope) * np.log10(rh / u.au)
+        + 2.5 * delta_slope * np.log10(delta / u.au)
+        + 2.5 * (Phi(phase) / Phi(0))
+    )
 
 
 def weighted_mean(x, unc):
