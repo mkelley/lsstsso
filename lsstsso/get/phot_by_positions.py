@@ -146,7 +146,7 @@ def phot_by_positions(
                 POINT('ICRS', query.ra, query.dec)) < {tolerance.to_value(u.deg)}
     JOIN VisitDetector as visit
     ON source.visit = visit.visitId
-    AND source.detector = visit.detector)
+    AND source.detector = visit.detector
     """
     if constraints is not None:
         cmd += "WHERE " + constraints
