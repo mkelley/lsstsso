@@ -102,9 +102,9 @@ def phot_by_positions(
 
     Notes
     -----
-    Within the ADQL command, the user table is named "query" and the
-    Source/DiaSource table is named "source", e.g., "source.midpointMjdTai",
-    "query.objid".
+    Within the ADQL command, the user table is named "query", the
+    Source/DiaSource table is named "source", and the visit detector table is
+    named "visit", e.g., "source.midpointMjdTai", "query.objid", "visit.seeing".
 
     """
 
@@ -129,6 +129,11 @@ def phot_by_positions(
             default_columns = diaSource_default_columns
 
         columns += [f"source.{col}" for col in default_columns]
+        columns += [
+            "visit.seeing",
+            "visit.expTime",
+            "visit.expMidptMJD",
+        ]
 
     cmd = f"""
     SELECT {",".join(columns)}
@@ -136,6 +141,9 @@ def phot_by_positions(
     JOIN TAP_UPLOAD.query AS query
     ON DISTANCE(POINT('ICRS', source.ra, source.dec),
                 POINT('ICRS', query.ra, query.dec)) < {tolerance.to_value(u.deg)}
+    JOIN VisitDetector as visit
+    ON source.visit = visit.visitId
+    AND source.detector = visit.detector)
     """
     if constraints is not None:
         cmd += "WHERE " + constraints
