@@ -75,11 +75,13 @@ def sky_and_time(
         The time for each coordinate.
 
     tol : Quantity
-        The time tolerance.  Usually equal to 1 s to account for shutter timing.
-        May be an array for a different tolerance with each ``coords``.
+        The time tolerance.  Try 1 s or less for DiaSource sources, or 15 s for
+        Source sources. May be an array for a different tolerance with each
+        ``coords``.
 
     result : Result
-        An RSP result.  Columns "ra", "dec", and "midpointMjdTai" will be used.
+        An RSP result.  Columns "ra", "dec", and "midpointMjdTai"/"mid will be
+        used.
 
 
     Returns
@@ -92,11 +94,21 @@ def sky_and_time(
 
     """
 
-    if not (set(result.columns) & {"ra", "dec", "midpointMjdTai"}):
-        raise KeyError("ra, dec, and/or midpointMjdTai not in result")
+    if (
+        "ra" not in result.columns
+        or "dec" not in result.columns
+        or (
+            "midpointMjdTai" not in result.columns
+            and "expMidptMJD" not in result.columns
+        )
+    ):
+        raise KeyError("ra, dec, and/or midpointMjdTai/expMidptMJD not in result")
 
     coords_r = SkyCoord(result["ra"], result["dec"])
-    t_r = result.midpointMjdTai
+    if "midpointMjdTai" in result.columns:
+        t_r = result.midpointMjdTai
+    else:
+        t_r = result.expMidptMJD
 
     # broadcast tol as needed
     if tol.ndim != coords.ndim:
