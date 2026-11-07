@@ -24,7 +24,7 @@ class Result:
         self._columns = table.colnames
 
         for col in table.columns:
-            if "Mjd" in col and "Tai" in col:
+            if col == "midpointMjdTai" or col == "expMidptMJD":
                 data = Time(table[col], scale="tai", format="mjd")
             elif col in ("peri_time", "epoch_mjd"):
                 data = Time(table[col], scale="tt", format="mjd")
