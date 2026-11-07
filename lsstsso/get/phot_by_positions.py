@@ -30,7 +30,6 @@ source_default_columns = [
     "ixxPSF",
     "iyyPSF",
     "centroid_flag",
-    "reliability",
     "extendedness",
 ]
 
