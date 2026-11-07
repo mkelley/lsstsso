@@ -84,7 +84,7 @@ class Result:
             if isinstance(key, int):
                 return namedtuple("ResultRow", *values)
 
-            return Result(*values)
+            return Result(Table(values, names=self.columns))
 
         return getattr(self, key)
 
