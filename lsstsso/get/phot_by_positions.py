@@ -144,7 +144,7 @@ def phot_by_positions(
     JOIN TAP_UPLOAD.query AS query
     ON DISTANCE(POINT('ICRS', source.ra, source.dec),
                 POINT('ICRS', query.ra, query.dec)) < {tolerance.to_value(u.deg)}
-    JOIN VisitDetector as visit
+    JOIN dp2.VisitDetector as visit
     ON source.visit = visit.visitId
     AND source.detector = visit.detector
     """
