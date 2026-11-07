@@ -33,7 +33,7 @@ def sky(
 
     """
 
-    if not (set(result.columns()) & {"ra", "dec"}):
+    if not (set(result.columns) & {"ra", "dec"}):
         raise KeyError("ra and/or dec not in result")
 
     coords_r = SkyCoord(result["ra"], result["dec"])
@@ -92,7 +92,7 @@ def sky_and_time(
 
     """
 
-    if not (set(result.columns()) & {"ra", "dec", "midpointMjdTai"}):
+    if not (set(result.columns) & {"ra", "dec", "midpointMjdTai"}):
         raise KeyError("ra, dec, and/or midpointMjdTai not in result")
 
     coords_r = SkyCoord(result["ra"], result["dec"])

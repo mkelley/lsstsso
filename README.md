@@ -106,7 +106,7 @@ Avoid returning column names that conflict with `Result` methods (e.g., "columns
 Get a list of columns in the `Result` object:
 
 ```python
->>> lc.columns()
+>>> lc.columns
 ('SSObjectId', 'midpointMjdTai', 'helioRange', 'topoRange', 'phaseAngle', 'elongation', 'ephRate', 'ephOffset', 'band', 'apFlux', 'apFluxErr', 'centroid_flag', 'pixelFlags')
 ```
 
