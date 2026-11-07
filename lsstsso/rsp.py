@@ -9,10 +9,16 @@ import time
 from contextlib import contextmanager
 from glob import glob
 from logging import getLogger
+from warnings import warn
 
 import pyvo as vo
 from astropy.table import Table
 from pyvo.auth import AuthSession
+
+try:
+    from lsst.rsp import RSPDiscovery
+except ImportError:
+    RSPDiscovery = None
 
 from .result import Result
 
@@ -21,13 +27,20 @@ class RSP:
     """Rubin Science Platform API interface."""
 
     def __init__(self) -> None:
-        token = os.environ["LSST_SSO_RSP_TOKEN"]
-        self.session = AuthSession()
-        self.session.credentials.set_password("x-oauth-basic", token)
+        if RSPDiscovery is None:
+            token = os.environ.get("LSST_SSO_RSP_TOKEN")
+            self.session = AuthSession()
+            self.session.credentials.set_password("x-oauth-basic", token)
 
-        self.tap_service = vo.dal.TAPService(
-            "https://data.lsst.cloud/api/tap", session=self.session
-        )
+            self.tap_service = vo.dal.TAPService(
+                "https://data.lsst.cloud/api/tap", session=self.session
+            )
+        else:
+            discovery = RSPDiscovery("dp2")
+            self.tap_service = discovery.get_tap_client()
+
+        if self.tap_service is None:
+            warn("Could not connect to TAP service.")
 
     def query_tap(
         self,
