@@ -13,6 +13,8 @@ source_default_columns = [
     "visit",
     "detector",
     "sourceId",
+    "x",
+    "y",
     "blendedness_abs",
     "blendedness_flag",
     "psfFlux",
