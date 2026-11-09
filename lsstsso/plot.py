@@ -5,6 +5,7 @@ import numpy as np
 from astropy.time import Time
 
 from .band import Band
+from .color.color import Color
 from .color.color_matrix import ColorMatrix
 from .color.transform import transform
 
@@ -36,18 +37,29 @@ markers = {
 }
 
 
-def colors_to_labels(anchor: Band, cm: ColorMatrix | None):
+def colors_to_labels(
+    anchor: Band, cm: ColorMatrix | None, default_cm: ColorMatrix | None
+):
     labels = {}
 
     for band in Band:
-        if cm is None or band == anchor:
+        if (cm is None and default_cm is None) or band == anchor:
             color = None
         else:
+            color = None
             try:
-                color, _ = transform(0 * u.mag, 0 * u.mag, band, anchor, cm)
+                # first use default color matrix
+                color, _ = transform(0 * u.mag, 0 * u.mag, band, anchor, default_cm)
                 color = color.value
+
+                if cm is not None:
+                    # now try provided color matrix
+                    color, _ = transform(0 * u.mag, 0 * u.mag, band, anchor, cm)
+                    color = color.value
             except ValueError:
-                color = None
+                # at least one transformation failed, but this is OK, either
+                # color will be `None` or the default color matrix was used
+                pass
 
         if color is None or band == anchor:
             label = f"${band}$"
@@ -66,6 +78,7 @@ def lightcurve(
     bands: np.ndarray[Band],
     anchor: Band | str = Band.r,
     cm: ColorMatrix | None = None,
+    use_default_cm: bool = True,
     ax: mpl.axes.Axes = None,
     labels: dict[Band, str] | None = None,
     **kwargs,
@@ -75,7 +88,20 @@ def lightcurve(
     if ax is None:
         ax = plt.gca()
 
-    labels = colors_to_labels(Band(anchor), cm)
+    if use_default_cm:
+        default_cm = ColorMatrix(
+            [
+                Color("u", "g", 1.83 * u.mag, 0.05 * u.mag),
+                Color("g", "r", 0.59 * u.mag, 0.01 * u.mag),
+                Color("r", "i", 0.21 * u.mag, 0.01 * u.mag),
+                Color("i", "z", 0.05 * u.mag, 0.01 * u.mag),
+                Color("z", "y", 0.03 * u.mag, 0.01 * u.mag),
+            ]
+        )
+    else:
+        default_cm = None
+
+    labels = colors_to_labels(Band(anchor), cm, default_cm)
 
     default_opts = {
         "markersize": 7,
@@ -93,5 +119,12 @@ def lightcurve(
         if cm is None or band == anchor:
             ax.errorbar(t[i], m[i], unc[i], **opts)
         else:
-            a, aunc = transform(m[i], unc[i], band, anchor, cm)
+            try:
+                a, aunc = transform(m[i], unc[i], band, anchor, cm)
+            except ValueError:
+                if default_cm:
+                    a, aunc = transform(m[i], unc[i], band, anchor, default_cm)
+                else:
+                    a = m[i]
+                    aunc = unc[i]
             ax.errorbar(t[i], a, aunc, **opts)
