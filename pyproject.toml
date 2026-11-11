@@ -1,6 +1,6 @@
 [project]
 name = "lsstsso"
-description = "Inspect data of solar system objects observed by LSST"
+description = "Analyze data of solar system objects observed by Rubin Observatory / LSST"
 readme = "README.md"
 authors = [{ name = "Michael S. P. Kelley", email = "msk@astro.umd.edu" }]
 license = { text = "BSD 3-Clause License" }
