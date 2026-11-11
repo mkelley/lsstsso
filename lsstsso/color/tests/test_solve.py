@@ -2,7 +2,6 @@ import numpy as np
 
 from ..color import Color
 from ..color_matrix import ColorMatrix
-from ..solve import solve
 
 
 def test_solve_simple():
@@ -12,8 +11,7 @@ def test_solve_simple():
     ]
 
     cm = ColorMatrix(colors)
-
-    result = solve(cm)
+    result = ColorMatrix(colors, solve=True)
 
     assert np.isclose(result["u", "g"].index.value, 1.5)
     assert np.isclose(result["u", "g"].unc.value, np.hypot(0.06, 0.013))

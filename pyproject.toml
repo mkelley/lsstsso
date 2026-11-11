@@ -27,7 +27,7 @@ test = [
     "tox>=4.33",
 ]
 
-docs = ["matplotlib>=3.10", "packaging", "pydata-sphinx-theme"]
+docs = ["packaging", "pydata-sphinx-theme"]
 
 [build-system]
 requires = ["setuptools>=80", "wheel", "setuptools_scm[toml]>=9"]
@@ -40,3 +40,15 @@ write_to = "lsstsso/_version.py"
 zip-safe = false
 
 [tool.setuptools.packages.find]
+
+[tool.pytest.ini_options]
+minversion = "8.0"
+testpaths = ["lsstsso", "docs"]
+norecursedirs = ["docs[\\/]_build"]
+astropy_header = true
+doctest_plus = "enabled"
+text_file_format = "rst"
+remote_data_strict = true
+addopts = ["--doctest-rst", "--doctest-plus", "--color=yes"]
+xfail_strict = true
+doctest_norecursedirs = ["*/setup_package.py", "docs/_build"]

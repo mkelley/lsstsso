@@ -4,7 +4,6 @@ import numpy as np
 from ...band import Band
 from ..color import Color
 from ..color_matrix import ColorMatrix
-from ..transform import transform
 
 
 def test_transform():
@@ -15,10 +14,10 @@ def test_transform():
 
     cm = ColorMatrix(colors)
 
-    m, unc = transform(0 * u.mag, 0.1, Band.u, Band.g, cm)
+    m, unc = cm.transform(0 * u.mag, 0.1, Band.u, Band.g)
     assert u.isclose(m, -1 * u.mag)
     assert u.isclose(unc, np.hypot(0.1, 0.1) * u.mag)
 
-    m, unc = transform(2 * u.mag, 0.01, Band.r, Band.g, cm)
+    m, unc = cm.transform(2 * u.mag, 0.01, Band.r, Band.g)
     assert u.isclose(m, 4 * u.mag)
     assert u.isclose(unc, np.hypot(0.01, 0.2) * u.mag)

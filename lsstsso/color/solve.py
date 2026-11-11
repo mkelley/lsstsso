@@ -1,5 +1,6 @@
 """Tools to make a consistent color matrix."""
 
+import logging
 from itertools import combinations
 
 import numpy as np
@@ -60,6 +61,8 @@ def solve(cm: ColorMatrix) -> ColorMatrix:
 
     """
 
+    logger = logging.getLogger(__name__)
+
     # there may be up to 75 equations
     A = np.zeros((75, 15))
     b = np.zeros((75,))
@@ -69,16 +72,16 @@ def solve(cm: ColorMatrix) -> ColorMatrix:
 
     # track the equation we are on
     eqn = 0
+    message = "Equations:\n"
 
     # the first equations are trivial
-    print("Equations:")
     for vars, j in combinations(range(6), 2):
         if cm.index[vars, j] is not np.ma.masked:
             A[eqn, _to_index(vars, j)] = 1
             b[eqn] = cm.index[vars, j]
             unc[eqn] = cm.unc[vars, j]
             eqn += 1
-            print(f"  {bands[vars]}-{bands[j]} = {cm.index[vars, j]}")
+            message += f"  {bands[vars]}-{bands[j]} = {cm.index[vars, j]}\n"
 
     # the next equations are two color combinations
     for i, j, k in combinations(range(6), 3):
@@ -95,26 +98,22 @@ def solve(cm: ColorMatrix) -> ColorMatrix:
             b[eqn] = cm.index[i, j]
             unc[eqn] = cm.unc[i, j]
             eqn += 1
-            print(
-                f"  {bands[i]}-{bands[k]} - ({bands[j]}-{bands[k]}) = {bands[i]}-{bands[j]}"
-            )
+            message += f"  {bands[i]}-{bands[k]} - ({bands[j]}-{bands[k]}) = {bands[i]}-{bands[j]}\n"
 
         if cm.index[i, k] is not np.ma.masked:
             A[eqn, [_to_index(i, j), _to_index(j, k)]] = [1, 1]
             b[eqn] = cm.index[i, k]
             unc[eqn] = cm.unc[i, k]
             eqn += 1
-            print(
-                f"  {bands[i]}-{bands[j]} + {bands[j]}-{bands[k]} = {bands[i]}-{bands[k]}"
-            )
+            message += f"  {bands[i]}-{bands[j]} + {bands[j]}-{bands[k]} = {bands[i]}-{bands[k]}\n"
 
         if cm.index[j, k] is not np.ma.masked:
             A[eqn, [_to_index(i, j), _to_index(i, k)]] = [-1, 1]
             b[eqn] = cm.index[j, k]
             unc[eqn] = cm.unc[j, k]
-            print(
-                f"  -({bands[i]}-{bands[j]}) + {bands[i]}-{bands[k]} = {bands[j]}-{bands[k]}"
-            )
+            message += f"  -({bands[i]}-{bands[j]}) + {bands[i]}-{bands[k]} = {bands[j]}-{bands[k]}\n"
+
+    logger.debug(message)
 
     # least squares fit
 
@@ -162,11 +161,12 @@ def solve(cm: ColorMatrix) -> ColorMatrix:
     )
     fit_unc = np.sqrt(np.diag(cov))
 
-    print("\nSolution:")
+    message = "Solution:\n"
     colors = []
     for k, index in enumerate(vars):
         vars, j = _from_index(index)
         colors.append(Color(bands[vars], bands[j], fit[k], fit_unc[k]))
-        print(f"  {colors[-1]}")
+        message += f"  {colors[-1]}\n"
+    logger.debug(message)
 
     return ColorMatrix(colors)

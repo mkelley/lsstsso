@@ -11,7 +11,7 @@ def transform(
     from_band: Band | str,
     to_band: Band | str,
     color_matrix: ColorMatrix,
-) -> u.Quantity:
+) -> tuple[u.Quantity, u.Quantity]:
     """Transform a band to another.
 
 

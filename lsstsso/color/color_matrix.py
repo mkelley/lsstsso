@@ -40,11 +40,11 @@ y-r = g-r + y-g
 
 from itertools import combinations, product
 
+import astropy.units as u
 import numpy as np
 from astropy.io import ascii
 from astropy.table import Table
 from numpy.ma.core import MaskedConstant
-from scipy.optimize import curve_fit
 
 from ..band import Band
 from .color import Color
@@ -62,6 +62,10 @@ class ColorMatrix:
         The measured colors.  If a color contains arrays, they will be averaged.
         If a color is given twice, they will be averaged.
 
+    solve : bool, optional
+        If ``True``, then fill in missing colors and make a consistent matrix
+        using :func:`~lsstsso.color.solve.solve`.
+
 
     Examples
     --------
@@ -75,11 +79,18 @@ class ColorMatrix:
     ... ]
     >>> cm = ColorMatrix(colors)
     >>> print(cm)
-    >>> cm.transform(0 * u.mag, 0.03 * u.mag, Band.u, Band.g)
+    u-g = 1.000 ± 0.100 mag
+    g-i = 1.300 ± 0.100 mag
+    r-i = 0.200 ± 0.050 mag
+    >>> print(cm.transform(0 * u.mag, 0.03 * u.mag, Band.u, Band.g))
+    (<Quantity -1. mag>, <Quantity 0.10440307 mag>)
 
     """
 
-    def __init__(self, colors: list[Color] | None = None):
+    def __init__(self, colors: list[Color] | None = None, solve: bool = False):
+        # avoid circular import
+        from .solve import solve as solve_color
+
         self.index = np.ma.zeros((6, 6))
         self.unc = np.ma.zeros_like(self.index)
 
@@ -118,6 +129,11 @@ class ColorMatrix:
         self.index.mask = count == 0
         self.unc.mask = self.index.mask
 
+        if solve:
+            result = solve_color(self)
+            self.index = result.index
+            self.unc = result.unc
+
     def __repr__(self):
         n = np.sum(~np.triu(self.index.mask))
         return f"<ColorMatrix: {n} values>"
@@ -145,6 +161,51 @@ class ColorMatrix:
             return np.ma.masked
 
         return Color(a, b, self.index[i, j], self.unc[i, j])
+
+    def transform(
+        self,
+        m: u.Quantity,
+        unc: u.Quantity,
+        from_band: Band | str,
+        to_band: Band | str,
+    ) -> tuple[u.Quantity, u.Quantity]:
+        """Transform a measurement in one band to another.
+
+
+        Parameters
+        ----------
+        m : u.Quantity
+            The observation to transform in units of magnitudes.
+
+        unc : u.Quantity
+            The uncertainty on ``m``.
+
+        from_band : Band or str
+            The band in which ``m`` is measured.
+
+        to_band : Band or str
+            The band to transform to.
+
+
+        Results
+        -------
+        m_t : u.Quantity
+            The transformed measurement.
+
+        unc_t : u.Quantity
+            The uncertainty on ``m_t``.
+
+
+        Raises
+        ------
+        ValueError
+            If the transformation between these bands is not possible.
+
+        """
+
+        from .transform import transform
+
+        return transform(m, unc, from_band, to_band, self)
 
     @staticmethod
     def read(fn: str) -> "ColorMatrix":

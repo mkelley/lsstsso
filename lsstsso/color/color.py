@@ -25,7 +25,7 @@ class Color:
     >>> from lsstsso import Band
     >>> from lsstsso.color import Color
     >>>
-    >>> Color(Band.u, Band.g, 1.1, 0.02)
+    >>> print(Color(Band.u, Band.g, 1.1, 0.02))
     u-g = 1.100 ± 0.020 mag
 
     Strings may also be used
