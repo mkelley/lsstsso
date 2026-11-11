@@ -16,7 +16,7 @@ def test_init():
         Color(Band.z, Band.y, 0.11, 0.01),
     ]
 
-    cm = ColorMatrix(colors, fill=False)
+    cm = ColorMatrix(colors)
 
     expected = np.ma.masked_array(
         [
@@ -54,7 +54,7 @@ def test_init_averaging():
         Color(Band.u, Band.i, [0.8, 0.6], [0.1, 0.1]),
     ]
 
-    cm = ColorMatrix(colors, fill=False)
+    cm = ColorMatrix(colors)
 
     color = cm["u", "g"]
     assert u.isclose(color.index, 0.9 * u.mag)
@@ -72,7 +72,7 @@ def test_init_averaging():
 def test_getitem():
     colors = [Color(Band.u, Band.g, 1.0, 0.2)]
 
-    cm = ColorMatrix(colors, fill=False)
+    cm = ColorMatrix(colors)
 
     c = cm["u", "g"]
     assert c.left == Band.u
@@ -90,7 +90,7 @@ def test_fill():
         Color(Band.z, Band.y, 5, 0.5),
     ]
 
-    cm = ColorMatrix(colors, fill=True)
+    cm = ColorMatrix(colors)
 
     expected = np.ma.masked_array(
         [
@@ -170,7 +170,7 @@ def test_fill():
         Color(Band.r, Band.i, 3, 0.3),
     ]
 
-    cm = ColorMatrix(colors, fill=True)
+    cm = ColorMatrix(colors)
 
     expected = np.ma.masked_array(
         [
@@ -249,7 +249,7 @@ def test_read_write(tmp_path):
         Color(Band.r, Band.i, 0.2, 0.05),
         Color(Band.z, Band.y, 0.11, 0.01),
     ]
-    cm0 = ColorMatrix(colors, fill=False)
+    cm0 = ColorMatrix(colors)
     cm0.write(tmp_path / "color_matrix.ecsv")
 
     cm = ColorMatrix.read(tmp_path / "color_matrix.ecsv")
