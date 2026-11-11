@@ -15,8 +15,19 @@ dependencies = [
 ]
 dynamic = ["version"]
 
-# [project.urls]
-# homepage = "https://link-to-your-project"
+[project.urls]
+homepage = "https://github.com/mkelley/lsstsso"
+
+[project.optional-dependencies]
+test = [
+    "coverage",
+    "pytest>=8.0",
+    "pytest-doctestplus>=1.7.0",
+    "pytest-remotedata",
+    "tox>=4.33",
+]
+
+docs = ["matplotlib>=3.10", "packaging", "pydata-sphinx-theme"]
 
 [build-system]
 requires = ["setuptools>=80", "wheel", "setuptools_scm[toml]>=9"]
