@@ -44,6 +44,7 @@ import numpy as np
 from astropy.io import ascii
 from astropy.table import Table
 from numpy.ma.core import MaskedConstant
+from scipy.optimize import curve_fit
 
 from ..band import Band
 from .color import Color
@@ -61,16 +62,6 @@ class ColorMatrix:
         The measured colors.  If a color contains arrays, they will be averaged.
         If a color is given twice, they will be averaged.
 
-    fill : bool, optional
-        If ``True``, transformations between colors not measured will be
-        calculated from multi-step transformations, e.g., compute u-r from u-g
-        and g-r.
-
-
-    Notes
-    -----
-    Currently, the fewest number of steps takes precedence, e.g., a measured u-r
-    will be used over u-g + g-r, even if the latter has a lower uncertainty.
 
     Examples
     --------
@@ -84,11 +75,11 @@ class ColorMatrix:
     ... ]
     >>> cm = ColorMatrix(colors)
     >>> print(cm)
-    >>> cm.transform(0 * u.mag, 0.03 * u.mag, Band.u, Band.i)
+    >>> cm.transform(0 * u.mag, 0.03 * u.mag, Band.u, Band.g)
 
     """
 
-    def __init__(self, colors: list[Color] | None = None, fill: bool = True):
+    def __init__(self, colors: list[Color] | None = None):
         self.index = np.ma.zeros((6, 6))
         self.unc = np.ma.zeros_like(self.index)
 
@@ -127,9 +118,6 @@ class ColorMatrix:
         self.index.mask = count == 0
         self.unc.mask = self.index.mask
 
-        if fill:
-            self.fill()
-
     def __repr__(self):
         n = np.sum(~np.triu(self.index.mask))
         return f"<ColorMatrix: {n} values>"
@@ -158,44 +146,145 @@ class ColorMatrix:
 
         return Color(a, b, self.index[i, j], self.unc[i, j])
 
-    def fill(self):
-        """Fill in missing transformations that can be calculated."""
+    def solve(self) -> "ColorMatrix":
+        """New color solution with least-squares approach."""
 
-        # recursively fill them in
-        while True:
-            new_colors = []
-            for i, j in combinations(range(6), 2):
-                # already measured?
-                if self.index[i, j] is not np.ma.masked:
-                    continue
+        def to_index(i, j):
+            return int(11 / 2 * i - i**2 / 2 - 1) + j - i
 
-                # OK blue-red is missing, now find what we can calculate it from, single
-                # steps only
-                colors = []
-                unc = []
-                for band in set(range(6)) - {i, j}:
-                    if not self.index.mask[i, band] and not self.index.mask[band, j]:
-                        colors.append(self.index[i, band] + self.index[band, j])
-                        unc.append(np.hypot(self.unc[i, band], self.unc[band, j]))
+        def from_index(k):
+            """
+            [  0    1    2    3    4    5    6    7    8    9   10   11   12   13   14]
+            [u-g, u-r, u-i, u-z, u-y, g-r, g-i, g-z, g-y, r-i, r-z, r-y, i-z, i-y, z-y]
+            """
 
-                if len(colors) == 0:
-                    continue
+            return [
+                (0, 1),
+                (0, 2),
+                (0, 3),
+                (0, 4),
+                (1, 2),
+                (1, 3),
+                (1, 4),
+                (1, 5),
+                (2, 3),
+                (2, 4),
+                (2, 5),
+                (3, 4),
+                (3, 5),
+                (4, 5),
+            ][k]
 
-                # chose the lowest uncertainty
-                k = np.argmin(unc)
-                new_colors.append((i, j, colors[k], unc[k]))
+        # there may be up to 75 equations
+        A = np.zeros((75, 15))
+        b = np.zeros((75,))
+        unc = np.ones((75,))
 
-            if len(new_colors) == 0:
-                break
+        bands = list(Band)
 
-            # save updating for last to avoid propagating newly calculated colors in
-            # the current iteration
-            for i, j, value, unc in new_colors:
-                self.index[i, j] = value
-                self.unc[i, j] = unc
+        # track the equation we are on
+        eqn = 0
 
-                self.index[j, i] = -value
-                self.unc[j, i] = unc
+        # the first equations are trivial
+        print("Equations:")
+        for vars, j in combinations(range(6), 2):
+            if self.index[vars, j] is not np.ma.masked:
+                A[eqn, to_index(vars, j)] = 1
+                b[eqn] = self.index[vars, j]
+                unc[eqn] = self.unc[vars, j]
+                eqn += 1
+                print(f"  {bands[vars]}-{bands[j]} = {self.index[vars, j]}")
+
+        # the next equations are two color combinations
+        for i, j, k in combinations(range(6), 3):
+            n = (
+                int(self.index[i, j] is not np.ma.masked)
+                + int(self.index[i, k] is not np.ma.masked)
+                + int(self.index[j, k] is not np.ma.masked)
+            )
+            if n < 2:
+                continue
+
+            if self.index[i, j] is not np.ma.masked:
+                A[eqn, [to_index(i, k), to_index(j, k)]] = [1, -1]
+                b[eqn] = self.index[i, j]
+                unc[eqn] = self.unc[i, j]
+                eqn += 1
+                print(
+                    f"  {bands[i]}-{bands[k]} - ({bands[j]}-{bands[k]}) = {bands[i]}-{bands[j]}"
+                )
+
+            if self.index[i, k] is not np.ma.masked:
+                A[eqn, [to_index(i, j), to_index(j, k)]] = [1, 1]
+                b[eqn] = self.index[i, k]
+                unc[eqn] = self.unc[i, k]
+                eqn += 1
+                print(
+                    f"  {bands[i]}-{bands[j]} + {bands[j]}-{bands[k]} = {bands[i]}-{bands[k]}"
+                )
+
+            if self.index[j, k] is not np.ma.masked:
+                A[eqn, [to_index(i, j), to_index(i, k)]] = [-1, 1]
+                b[eqn] = self.index[j, k]
+                unc[eqn] = self.unc[j, k]
+                print(
+                    f"  -({bands[i]}-{bands[j]}) + {bands[i]}-{bands[k]} = {bands[j]}-{bands[k]}"
+                )
+
+        # least squares fit
+
+        def model(A, *x):
+            return A @ np.array(x)
+
+        guess = np.array(
+            [
+                1.83,
+                2.42,
+                2.63,
+                2.68,
+                2.71,
+                0.59,
+                0.8,
+                0.85,
+                0.88,
+                0.21,
+                0.26,
+                0.29,
+                0.05,
+                0.08,
+                0.03,
+            ]
+        )
+
+        # remove unused equations
+        A = A[:eqn]
+        b = b[:eqn]
+        unc = unc[:eqn]
+
+        # remove unused variables
+        vars = np.flatnonzero(np.sum(A**2, 0))
+        A = A[:, vars]
+        guess = guess[vars]
+
+        fit, cov = curve_fit(
+            model,
+            A,
+            b,
+            p0=guess,
+            sigma=unc,
+            absolute_sigma=True,
+            method="trf",
+        )
+        fit_unc = np.sqrt(np.diag(cov))
+
+        print("\nSolution:")
+        colors = []
+        for k, index in enumerate(vars):
+            vars, j = from_index[index]
+            colors.append(Color(bands[vars], bands[j], fit[k], fit_unc[k]))
+            print(f"  {colors[-1]}")
+
+        return ColorMatrix(colors)
 
     @staticmethod
     def read(fn: str) -> "ColorMatrix":
