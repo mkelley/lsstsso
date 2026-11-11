@@ -24,3 +24,50 @@ exclude_patterns = ["_build", "Thumbs.db", ".DS_Store"]
 
 html_theme = "pydata_sphinx_theme"
 html_static_path = ["_static"]
+
+global_substitutions: dict[str, str] = {
+    # NumPy
+    "ndarray": ":class:`numpy.ndarray`",
+    # Table
+    "Column": ":class:`~astropy.table.Column`",
+    "MaskedColumn": ":class:`~astropy.table.MaskedColumn`",
+    "TableColumns": ":class:`~astropy.table.TableColumns`",
+    "Row": ":class:`~astropy.table.Row`",
+    "Table": ":class:`~astropy.table.Table`",
+    "QTable": ":class:`~astropy.table.QTable`",
+    # Time
+    "Time": ":class:`~astropy.time.Time`",
+    "TimeDelta": ":class:`~astropy.time.TimeDelta`",
+    # Units
+    "PhysicalType": ":class:`~astropy.units.PhysicalType`",
+    "Quantity": ":class:`~astropy.units.Quantity`",
+    "Unit": ":class:`~astropy.units.UnitBase`",
+    "StructuredUnit": ":class:`~astropy.units.StructuredUnit`",
+}
+
+links_to_become_substitutions: dict[str, str] = {
+    # Python
+    "Python": "https://www.python.org",
+    "PEP8": "https://www.python.org/dev/peps/pep-0008",
+    # NumPy
+    "NumPy": "https://numpy.org",
+    "numpydoc": "https://pypi.org/project/numpydoc",
+    # matplotlib
+    "Matplotlib": "https://matplotlib.org",
+    # scipy
+    "SciPy": "https://www.scipy.org",
+    # IPython
+    "IPython": "https://ipython.org",
+    # pip
+    "pip": "https://pip.pypa.io",
+    # pytest
+    "pytest": "https://pytest.org/en/latest/index.html",
+    "pytest-doctestplus": "https://github.com/astropy/pytest-doctestplus",
+    "pytest-remotedata": "https://github.com/astropy/pytest-remotedata",
+}
+
+processed_links = {
+    key: f"`{key} <{value}>`_" for key, value in links_to_become_substitutions.items()
+}
+
+global_substitutions |= processed_links

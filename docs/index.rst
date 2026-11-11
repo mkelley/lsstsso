@@ -1,8 +1,3 @@
-.. LSST SSO documentation master file, created by
-   sphinx-quickstart on Wed Nov 11 08:41:32 2026.
-   You can adapt this file completely to your liking, but it should at least
-   contain the root `toctree` directive.
-
 LSST SSO documentation
 ======================
 
@@ -13,4 +8,29 @@ documentation for details.
 
 .. toctree::
    :maxdepth: 2
-   :caption: Contents:
+   :hidden:
+
+   getting-started
+
+.. grid:: 2
+    :gutter: 2
+
+    .. grid-item-card:: Getting Started
+        :link: index_getting_started
+        :link-type: doc
+        :text-align: center
+
+        :material-outlined:`directions_run;8em;sd-text-secondary`
+
+        New to lsstsso? Check out the getting started guides. They contain an
+        introduction to lsstsso's main concepts and links to additional tutorials.
+
+    .. grid-item-card:: User Guide
+        :link: index_user_docs
+        :link-type: doc
+        :text-align: center
+
+        :material-outlined:`menu_book;8em;sd-text-secondary`
+
+        The user guide provides in-depth information on the key concepts
+        of astropy with useful background information and explanation.
