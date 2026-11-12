@@ -87,8 +87,8 @@ class RSP:
 
         try:
             tap_result = job.fetch_result()
-            end = time.monotonic()
         finally:
+            end = time.monotonic()
             logger.info("%s in %.2f s", tap_result.status[0], end - start)
             job.delete()
 

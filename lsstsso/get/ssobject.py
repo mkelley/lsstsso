@@ -7,6 +7,7 @@ from ..result import Result
 def ssobject(
     constraints: str,
     columns: list[str] | None = None,
+    top: int | None = None,
     cached=True,
     **kwargs,
 ) -> Result:
@@ -22,6 +23,9 @@ def ssobject(
         The columns to return.  SSObject columns may be prefixed with "s.",
         numbered_identifications may be prefixed with "n.", e.g.,
         "s.ssObjectId".
+
+    top : int, optional
+        Limit the results to at most ``top`` rows.
 
     cached : bool, optional
         ``True`` to cache or return a cached query.
@@ -49,8 +53,10 @@ def ssobject(
             "n.permid",
         ]
 
+    _top = "" if top is None else f"TOP {top}"
+
     query = f"""
-SELECT {",".join(columns)} FROM dp2.SSObject AS s
+SELECT {_top} {",".join(columns)} FROM dp2.SSObject AS s
 LEFT JOIN dp2.numbered_identifications AS n
 ON n.unpacked_primary_provisional_designation = s.designation
 WHERE {constraints}

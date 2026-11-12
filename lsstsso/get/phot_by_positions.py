@@ -1,7 +1,7 @@
 from logging import getLogger
 
 import astropy.units as u
-from astropy.coordinates import SkyCoord
+from astropy.table import Table
 
 from .. import rsp
 from ..result import Result
@@ -66,7 +66,7 @@ diaSource_default_columns = [
 
 
 def phot_by_positions(
-    query: SkyCoord,
+    query: Table,
     tolerance: u.Quantity = 1 * u.arcsec,
     table: str = "DiaSource",
     constraints: str | None = None,

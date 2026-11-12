@@ -27,7 +27,12 @@ test = [
     "tox>=4.33",
 ]
 
-docs = ["packaging", "pydata-sphinx-theme"]
+docs = [
+    "packaging",
+    "pydata-sphinx-theme",
+    "pytest-doctestplus>=1.7.0",
+    "pytest-remotedata",
+]
 
 [build-system]
 requires = ["setuptools>=80", "wheel", "setuptools_scm[toml]>=9"]

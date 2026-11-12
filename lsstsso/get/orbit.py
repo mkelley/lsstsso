@@ -4,7 +4,12 @@ from .. import rsp
 from ..result import Result
 
 
-def orbit(constraints: str, columns: list[str] | None = None, cached=True) -> Result:
+def orbit(
+    constraints: str,
+    columns: list[str] | None = None,
+    top: int | None = None,
+    cached=True,
+) -> Result:
     """Query the mpc_orbit table.
 
 
@@ -15,6 +20,9 @@ def orbit(constraints: str, columns: list[str] | None = None, cached=True) -> Re
 
     columns : list of str, optional
         The columns to return.
+
+    top : int, optional
+        Limit the results to at most ``top`` rows.
 
     cached : bool, optional
         ``True`` to cache or return a cached query.
@@ -48,9 +56,11 @@ def orbit(constraints: str, columns: list[str] | None = None, cached=True) -> Re
             "nobs_total",
         ]
 
+    _top = "" if top is None else f"TOP {top}"
+
     query = f"""
-SELECT {",".join(columns)} FROM dp2.mpc_orbits
-WHERE '{constraints}'
+SELECT {_top} {",".join(columns)} FROM dp2.mpc_orbits
+WHERE {constraints}
 """
     logger.debug(query)
 

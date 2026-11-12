@@ -51,14 +51,12 @@ def lightcurve(
             "d.pixelFlags",
         ]
 
-    query = (
-        f"""
+    query = f"""
 SELECT {",".join(columns)} FROM dp2.SSSource AS s
 INNER JOIN dp2.DiaSource AS d on d.diaSourceId = s.diaSourceId
 WHERE s.SSObjectId = {ssobjectid}
 ORDER BY d.midpointMjdTai
-""",
-    )
+"""
     logger.debug(query)
 
     with rsp.provider() as _rsp:
