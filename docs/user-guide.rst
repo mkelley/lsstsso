@@ -12,3 +12,9 @@ User Guide
    get
    rsp
 
+.. toctree::
+   :caption: Color and bandpass data
+   :maxdepth: 1
+
+   band
+   color

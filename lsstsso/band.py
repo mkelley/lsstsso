@@ -7,6 +7,8 @@ from enum import StrEnum
 
 import astropy.units as u
 
+__all__ = ["Band"]
+
 
 class Band(StrEnum):
     u = "u"

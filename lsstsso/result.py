@@ -1,4 +1,4 @@
-from collections import namedtuple
+from types import SimpleNamespace
 from typing import Any, overload
 
 import astropy.units as u
@@ -7,6 +7,8 @@ from astropy.table import Table
 from astropy.time import Time
 
 from .band import Band
+
+__all__ = ["Result"]
 
 
 class Result:
@@ -78,12 +80,13 @@ class Result:
 
         """
 
+        if isinstance(key, int):
+            return SimpleNamespace(
+                **{col: data[key] for col, data in self._asdict().items()}
+            )
+
         if isinstance(key, int | slice | list | np.ndarray):
             values = [self[col][key] for col in self.columns]
-
-            if isinstance(key, int):
-                return namedtuple("ResultRow", *values)
-
             return Result(Table(values, names=self.columns))
 
         return getattr(self, key)
@@ -116,7 +119,6 @@ class Result:
     def rows(self):
         for i in range(len(self)):
             yield self[i]
-        raise StopIteration  # noqa: PLR1708
 
     def sort(self, field: str, reversed: bool = True):
         """In-place sort by the requested column ."""
@@ -126,5 +128,5 @@ class Result:
         if reversed:
             i = i[::-1]
 
-        for f in self._fields:
+        for f in self._columns:
             self[f][:] = self[f][i]

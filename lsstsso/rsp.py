@@ -22,6 +22,8 @@ except ImportError:
 
 from .result import Result
 
+__all__ = ["RSP", "provider"]
+
 
 class RSP:
     """Rubin Science Platform API interface."""
@@ -63,7 +65,7 @@ class RSP:
         cache : bool, optional
             ``True`` to use result cache.
 
-        **kwargs
+        kwargs
             Additional keyword arguments to pass to `TAPService.submit_job`.
 
 

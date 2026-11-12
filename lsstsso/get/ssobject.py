@@ -30,7 +30,7 @@ def ssobject(
     cached : bool, optional
         ``True`` to cache or return a cached query.
 
-    **kwargs
+    kwargs
         Other keyword arguments are passed to `RSP.query_tap`.
 
     Returns

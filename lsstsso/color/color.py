@@ -14,7 +14,7 @@ class Color:
     Parameters
     ----------
     left, right : Band
-        The bandpasses for the measurement.
+        The bandpasses for the measurement: ``left - right``.
 
     index, unc : u.Quantity
         The color measurement and uncertainty in units of mag.  May be arrays.

@@ -172,3 +172,9 @@ Query for photometry by sky position
     287.2315412417827 -23.851685147435273 287.2315412417827 -23.851685147435273    i ...
 
 With the ephemeris positions of a target obtained by other means, `lsstsso.get.phot_by_positions` can get photometry of any Solar System object, even if they are not linked to the object by Rubin Observatory's Solar System Processing.
+
+
+Reference/API
+=============
+
+.. automodapi:: lsstsso.get

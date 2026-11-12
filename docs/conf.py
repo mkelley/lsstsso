@@ -13,11 +13,25 @@ author = "Michael S. P. Kelley"
 # -- General configuration ---------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration
 
-extensions = ["pytest_doctestplus.sphinx.doctestplus"]
+extensions = [
+    "pytest_doctestplus.sphinx.doctestplus",
+    "sphinx_automodapi.automodapi",
+    "sphinx.ext.intersphinx",
+]
+numpydoc_show_class_members = False
 
 templates_path = ["_templates"]
 exclude_patterns = ["_build", "Thumbs.db", ".DS_Store"]
 
+intersphinx_resolve_self = "lsstsso"
+intersphinx_mapping = {
+    "astropy": ("https://docs.astropy.org/en/stable/", None),
+    "matplotlib": ("https://matplotlib.org/stable/", None),
+    "numpy": ("https://numpy.org/doc/stable/", None),
+    "python": ("https://docs.python.org/3/", None),
+    "sbpy": ("https://sbpy.readthedocs.io/en/stable/", None),
+    "scipy": ("https://docs.scipy.org/doc/scipy/", None),
+}
 
 # -- Options for HTML output -------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#options-for-html-output
