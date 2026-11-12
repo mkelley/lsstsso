@@ -1,36 +1,11 @@
 LSST SSO documentation
 ======================
 
-Add your content using ``reStructuredText`` syntax. See the
-`reStructuredText <https://www.sphinx-doc.org/en/master/usage/restructuredtext/index.html>`_
-documentation for details.
-
+The ``lsstsso`` package contains methods and classes designed for the analysis of Solar System object data from the Legacy Survey of Space and Time (LSST).  It contains convenience wrappers for fetching catalog data from the Rubin Science Platform, functions to help filter that data, and classes for the manipulation of photometric colors.
 
 .. toctree::
    :maxdepth: 2
    :hidden:
 
    getting-started
-
-.. grid:: 2
-    :gutter: 2
-
-    .. grid-item-card:: Getting Started
-        :link: index_getting_started
-        :link-type: doc
-        :text-align: center
-
-        :material-outlined:`directions_run;8em;sd-text-secondary`
-
-        New to lsstsso? Check out the getting started guides. They contain an
-        introduction to lsstsso's main concepts and links to additional tutorials.
-
-    .. grid-item-card:: User Guide
-        :link: index_user_docs
-        :link-type: doc
-        :text-align: center
-
-        :material-outlined:`menu_book;8em;sd-text-secondary`
-
-        The user guide provides in-depth information on the key concepts
-        of astropy with useful background information and explanation.
+   user-guide
