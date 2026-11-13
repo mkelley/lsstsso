@@ -18,14 +18,14 @@ class Band(StrEnum):
     z = "z"
     y = "y"
 
-    def __eq__(self, band):
-        return self.value == band.value
-
-    def __hash__(self):
-        return "ugrizy".index(self.value)
+    def __le__(self, band):
+        return self.wave < band.wave or self == band
 
     def __lt__(self, band):
         return self.wave < band.wave
+
+    def __ge__(self, band):
+        return self.wave > band.wave or self == band
 
     def __gt__(self, band):
         return self.wave > band.wave
