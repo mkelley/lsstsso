@@ -33,6 +33,14 @@ def test_str():
     assert str(c) == "u-g = 1.500 ± 0.071 mag (mean of 2 points)"
 
 
+def test_equality():
+    assert Color("g", "r", 1, 0.1) == Color("g", "r", 1, 0.1)
+    assert Color("g", "r", 1, 0.1) != Color("u", "r", 1, 0.1)
+    assert Color("g", "r", 1, 0.1) != Color("g", "i", 1, 0.1)
+    assert Color("g", "r", 1, 0.1) != Color("g", "r", 1.001, 0.1)
+    assert Color("g", "r", 1, 0.1) != Color("g", "r", 1, 0.101)
+
+
 def test_mean():
     c = Color("g", "r", [0.4, 0.45] * u.mag, [0.1, 0.05] * u.mag)
     m = c.mean()

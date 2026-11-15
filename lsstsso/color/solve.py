@@ -1,172 +1,123 @@
-"""Tools to make a consistent color matrix."""
+"""Tools to fit a set of colors."""
 
-import logging
 from itertools import combinations
 
 import numpy as np
-from scipy.optimize import curve_fit
+from scipy.special import factorial
 
-from ..band import Band
 from .color import Color
 from .color_matrix import ColorMatrix
 
 
-def _to_index(i, j):
-    """Convert matrix indices to index of flattened upper triangle."""
-    return int(11 / 2 * i - i**2 / 2 - 1) + j - i
+def solve(colors: list[Color]) -> ColorMatrix:
+    """Solve for a new color solution with a least-squares approach.
 
-
-def _from_index(k):
-    """Convert flattened upper triangle index to matrix indices.
-
-    [  0    1    2    3    4    5    6    7    8    9   10   11   12   13   14]
-    [u-g, u-r, u-i, u-z, u-y, g-r, g-i, g-z, g-y, r-i, r-z, r-y, i-z, i-y, z-y]
-    """
-
-    return [
-        (0, 1),
-        (0, 2),
-        (0, 3),
-        (0, 4),
-        (1, 2),
-        (1, 3),
-        (1, 4),
-        (1, 5),
-        (2, 3),
-        (2, 4),
-        (2, 5),
-        (3, 4),
-        (3, 5),
-        (4, 5),
-    ][k]
-
-
-def solve(cm: ColorMatrix) -> ColorMatrix:
-    """New color solution with least-squares approach.
-
-    The colors will be adjusted and empty colors filled to make a consistent
-    color matrix.  The fitter will attempt to minimize the color matrix's
-    chi-sq.
+    The colors will be adjusted and all possible band combinations calculated to
+    make a consistent color matrix.  The fitter will attempt to minimize the
+    color matrix's chi-square.  This may result in correlated uncertainties for
+    some measurements.
 
 
     Parameters
     ----------
-    cm : ColorMatrix
-        The color matrix to solve.
+    colors : list of Color
+        A list of the colors to solve.
 
 
     Returns
     -------
     result : ColorMatrix
+        The new color set.
+
+    cov : numpy.ndarray
+        The fit covariance matrix.
+
+    cov_colors : list of tuples
+        The row and columns of ``cov`` correspond to the color pairs in this
+        list, e.g., ``cov[i, j]`` is the co-variance between ``cov_colors[i]``
+        and ``cov_colors[j]``.
+
+
+    Examples
+    --------
+
+    From an observation of :math:`u-g` and :math:`u-r`, calculate :math:`g-r`:
+
+    >>> from lsstsso.color import Color, solve
+    >>>
+    >>> colors = [Color("u", "g", 1.0, 0.1), Color("u", "r", 1.4, 0.1)]
+    >>> cm, _, _ = solve(colors)
+    >>> print(cm)
+    u-g = 1.000 ± 0.100 mag
+    u-r = 1.400 ± 0.100 mag
+    g-r = 0.400 ± 0.141 mag
 
     """
 
-    logger = logging.getLogger(__name__)
+    cm = ColorMatrix(colors)
 
-    # there may be up to 75 equations
-    A = np.zeros((75, 15))
-    b = np.zeros((75,))
-    unc = np.ones((75,))
+    # There are 5 fundamental colors: u-g, g-r, r-i, i-z, z-y.  But observations
+    # can be of any band pair, e.g., g-i.  This gives us 5 variables, and 6! /
+    # (2! * (6 - 2)!) = 15 equations. The variables are the observed magnitudes
+    # relative to u.  Let u = 0.  The equations are the 15 colors.
 
-    bands = list(Band)
+    # How many bands are given?
+    bands = sorted({color.left for color in colors} | {color.right for color in colors})
+    n_bands = len(bands)
+    n_colors = int(factorial(n_bands) / (2 * factorial(n_bands - 2)))
 
-    # track the equation we are on
-    eqn = 0
-    message = "Equations:\n"
+    # A is a set of equations for each color.  The columns are the brightness
+    # measurements, except for the shortest wavelength, which is implicitly 0
+    # for every row.  For example, if the bands are u, g, r, then the color u-g
+    # = [-1, 0], and u-r = [0, -1].  For g-r, the equation is [1, -1].
+    A = np.zeros((n_colors, n_bands - 1))
 
-    # the first equations are trivial
-    for vars, j in combinations(range(6), 2):
-        if cm.index[vars, j] is not np.ma.masked:
-            A[eqn, _to_index(vars, j)] = 1
-            b[eqn] = cm.index[vars, j]
-            unc[eqn] = cm.unc[vars, j]
-            eqn += 1
-            message += f"  {bands[vars]}-{bands[j]} = {cm.index[vars, j]}\n"
+    # b is the observed color
+    b = np.zeros(len(cm))
 
-    # the next equations are two color combinations
-    for i, j, k in combinations(range(6), 3):
-        n = (
-            int(cm.index[i, j] is not np.ma.masked)
-            + int(cm.index[i, k] is not np.ma.masked)
-            + int(cm.index[j, k] is not np.ma.masked)
-        )
-        if n < 2:
-            continue
+    # u is the uncertainty
+    u = np.zeros(len(cm))
 
-        if cm.index[i, j] is not np.ma.masked:
-            A[eqn, [_to_index(i, k), _to_index(j, k)]] = [1, -1]
-            b[eqn] = cm.index[i, j]
-            unc[eqn] = cm.unc[i, j]
-            eqn += 1
-            message += f"  {bands[i]}-{bands[k]} - ({bands[j]}-{bands[k]}) = {bands[i]}-{bands[j]}\n"
+    # generate the equation array and track which row is which color
+    equations = {}
+    for i, (j, k) in enumerate(combinations(range(n_bands), 2)):
+        equations[(j, k)] = i
 
-        if cm.index[i, k] is not np.ma.masked:
-            A[eqn, [_to_index(i, j), _to_index(j, k)]] = [1, 1]
-            b[eqn] = cm.index[i, k]
-            unc[eqn] = cm.unc[i, k]
-            eqn += 1
-            message += f"  {bands[i]}-{bands[j]} + {bands[j]}-{bands[k]} = {bands[i]}-{bands[k]}\n"
+        if j != 0:
+            A[i, j - 1] = 1
 
-        if cm.index[j, k] is not np.ma.masked:
-            A[eqn, [_to_index(i, j), _to_index(i, k)]] = [-1, 1]
-            b[eqn] = cm.index[j, k]
-            unc[eqn] = cm.unc[j, k]
-            message += f"  -({bands[i]}-{bands[j]}) + {bands[i]}-{bands[k]} = {bands[j]}-{bands[k]}\n"
+        A[i, k - 1] = -1
 
-    logger.debug(message)
+    # make the solution array from our observations
+    eqn = []
+    for i, color in enumerate(cm):
+        j = bands.index(color.left)
+        k = bands.index(color.right)
+        eqn.append(equations[(j, k)])
 
-    # least squares fit
+        b[i] = color.index.value
+        u[i] = color.unc.value
 
-    def model(A, *x):
-        return A @ np.array(x)
+    # get the equations to solve and weight them by 1 / measurement uncertainty
+    W = np.diag(1 / u)
+    wA_obs = W @ A[eqn]
+    wb = W @ b
 
-    guess = np.array(
-        [
-            1.83,
-            2.42,
-            2.63,
-            2.68,
-            2.71,
-            0.59,
-            0.8,
-            0.85,
-            0.88,
-            0.21,
-            0.26,
-            0.29,
-            0.05,
-            0.08,
-            0.03,
-        ]
-    )
+    # solve!
+    A_hat, _, _, _ = np.linalg.lstsq(wA_obs, wb, rcond=1e-7)
+    cov_A = np.linalg.inv(wA_obs.T @ wA_obs)
 
-    # remove unused equations
-    A = A[:eqn]
-    b = b[:eqn]
-    unc = unc[:eqn]
+    # get all colors and uncertainties
+    colors = A @ A_hat
+    cov = A @ cov_A @ A.T
+    unc = np.sqrt(np.diag(cov))
 
-    # remove unused variables
-    vars = np.flatnonzero(np.sum(A**2, 0))
-    A = A[:, vars]
-    guess = guess[vars]
+    colors = [
+        Color(bands[i], bands[j], colors[k], unc[k]) for (i, j), k in equations.items()
+    ]
+    cm = ColorMatrix(colors)
 
-    fit, cov = curve_fit(
-        model,
-        A,
-        b,
-        p0=guess,
-        sigma=unc,
-        absolute_sigma=True,
-        method="trf",
-    )
-    fit_unc = np.sqrt(np.diag(cov))
+    # return the covariance and the corresponding colors
+    cov_colors = [(str(bands[i]), str(bands[j])) for i, j in equations]
 
-    message = "Solution:\n"
-    colors = []
-    for k, index in enumerate(vars):
-        vars, j = _from_index(index)
-        colors.append(Color(bands[vars], bands[j], fit[k], fit_unc[k]))
-        message += f"  {colors[-1]}\n"
-    logger.debug(message)
-
-    return ColorMatrix(colors)
+    return ColorMatrix(colors), cov, cov_colors

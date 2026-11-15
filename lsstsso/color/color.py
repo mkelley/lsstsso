@@ -28,8 +28,6 @@ class Color:
     >>> print(Color(Band.u, Band.g, 1.1, 0.02))
     u-g = 1.100 ± 0.020 mag
 
-    Strings may also be used
-
     """
 
     left: Band
@@ -54,6 +52,18 @@ class Color:
 
     def __str__(self) -> str:
         return repr(self)[7:-1]
+
+    def __eq__(self, other) -> bool:
+        """Compares bands and values (via `astropy.units.isclose`)."""
+        return (
+            self.left == other.left
+            and self.right == other.right
+            and u.isclose(self.index, other.index)
+            and u.isclose(self.unc, other.unc)
+        )
+
+    def __ne__(self, other) -> bool:
+        return not (self == other)
 
     def mean(self) -> "Color":
         """Weighted average.

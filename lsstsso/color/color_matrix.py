@@ -38,6 +38,7 @@ y-r = g-r + y-g
 
 """
 
+from collections.abc import Iterator
 from itertools import combinations, product
 
 import astropy.units as u
@@ -62,10 +63,6 @@ class ColorMatrix:
         The measured colors.  If a color contains arrays, they will be averaged.
         If a color is given twice, they will be averaged.
 
-    solve : bool, optional
-        If ``True``, then fill in missing colors and make a consistent matrix
-        using :func:`~lsstsso.color.solve.solve`.
-
 
     Examples
     --------
@@ -87,10 +84,7 @@ class ColorMatrix:
 
     """
 
-    def __init__(self, colors: list[Color] | None = None, solve: bool = False):
-        # avoid circular import
-        from .solve import solve as solve_color
-
+    def __init__(self, colors: list[Color] | None = None):
         self.index = np.ma.zeros((6, 6))
         self.unc = np.ma.zeros_like(self.index)
 
@@ -129,25 +123,19 @@ class ColorMatrix:
         self.index.mask = count == 0
         self.unc.mask = self.index.mask
 
-        if solve:
-            result = solve_color(self)
-            self.index = result.index
-            self.unc = result.unc
-
     def __repr__(self):
-        n = np.sum(~np.triu(self.index.mask))
-        return f"<ColorMatrix: {n} values>"
+        return f"<ColorMatrix: {len(self)} values>"
 
     def __str__(self):
         lines = []
-        for i, j in combinations(range(6), 2):
-            if self.index[i, j] is np.ma.masked:
-                continue
-            color = Color(
-                list(Band)[i], list(Band)[j], self.index[i, j], self.unc[i, j]
-            )
+        for color in self:
             lines.append(str(color))
+
         return "\n".join(lines)
+
+    def __len__(self):
+        """Number of independent and unmasked colors."""
+        return np.sum(np.triu(~self.index.mask))
 
     def __getitem__(
         self, bands: tuple[Band | str, Band | str]
@@ -161,6 +149,13 @@ class ColorMatrix:
             return np.ma.masked
 
         return Color(a, b, self.index[i, j], self.unc[i, j])
+
+    def __iter__(self) -> Iterator[Color]:
+        """Iterator for the independent and unmasked colors."""
+        for i, j in combinations(range(6), 2):
+            if self.index[i, j] is np.ma.masked:
+                continue
+            yield Color(list(Band)[i], list(Band)[j], self.index[i, j], self.unc[i, j])
 
     def transform(
         self,
