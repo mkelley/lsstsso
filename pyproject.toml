@@ -33,6 +33,7 @@ docs = [
     "pytest-doctestplus>=1.7.0",
     "pytest-remotedata",
     "sphinx-automodapi",
+    "sphinxcontrib-globalsubs",
 ]
 
 [build-system]

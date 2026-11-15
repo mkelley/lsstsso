@@ -27,6 +27,9 @@ For example, get a list of Solar System objects in DP2 with cometary designation
     Query not cached ...
     OK in 8.18 s
     Caching result to ...
+
+.. doctest-remote-data::
+    
     >>> comets
     <Result: ssObjectId,designation,nObs,arc,firstObservationMjdTai,tisserand_J,permid>
 
@@ -76,6 +79,8 @@ Sorting
 =======
 
 Sort the result by a column:
+
+.. doctest-remote-data::
 
     >>> comets.sort("nObs")
 

@@ -112,6 +112,9 @@ def solve(colors: list[Color]) -> ColorMatrix:
     cov = A @ cov_A @ A.T
     unc = np.sqrt(np.diag(cov))
 
+    # off diagonals can be very small, but really should be 0
+    cov[np.isclose(cov, 0, atol=1e-9)] = 0
+
     colors = [
         Color(bands[i], bands[j], colors[k], unc[k]) for (i, j), k in equations.items()
     ]

@@ -1,20 +1,20 @@
 from importlib.metadata import PackageNotFoundError
 from importlib.metadata import version as _version
 
-from . import filters, get, logging, rsp, scale
+from . import color, filters, get, logging, rsp, scale
 from .band import Band
-from .color import Color, ColorMatrix, transform
+from .color import Color, ColorMatrix
 
 __all__ = [
     "Band",
     "Color",
     "ColorMatrix",
+    "color",
     "filters",
     "get",
     "logging",
     "rsp",
     "scale",
-    "transform",
 ]
 
 try:

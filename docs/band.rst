@@ -13,6 +13,8 @@ The bands themselves are attributes of ``Band``:
 
 .. code-block:: python
 
+    >>> from lsstsso import Band
+    >>>
     >>> Band.u
     <Band: u, 372.4 nm>
     >>> Band.z
@@ -26,8 +28,6 @@ The list of LSSTCam filters may be inspected by passing the class to the `list` 
 
 .. code-block:: python
 
-    >>> from lsstsso import Band
-    >>>
     >>> list(Band)
     [<Band: u, 372.4 nm>,
      <Band: g, 480.7 nm>,

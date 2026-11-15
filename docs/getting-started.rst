@@ -69,6 +69,9 @@ Next, get the lightcurve of an object.  The result is based on a join between th
     Query not cached ...
     OK in 7.90 s
     Caching result to ...
+
+.. doctest-remote-data::
+
     >>> print(lc)
          SSObjectId       midpointMjdTai           ra                 dec         helioRange topoRange ...
                                                   deg                 deg             AU         AU    ...
@@ -85,13 +88,13 @@ Take a u-g and a g-r color, solve for the u-r color, and transform a u-band magn
 .. code-block:: python
 
     >>> import astropy.units as u
-    >>> from lsstsso import Color, ColorMatrix
+    >>> from lsstsso.color import Color, ColorMatrix, solve
     >>>
     >>> colors = [
     ...     Color("u", "g", 1.8 * u.mag, 0.01 * u.mag),
     ...     Color("g", "r", 0.5 * u.mag, 0.01 * u.mag),
     ... ]
-    >>> cm = ColorMatrix(colors, solve=True)
+    >>> cm, _, _ = solve(colors)
     >>> print(cm.transform(20.0 * u.mag, 0.02 * u.mag, "u", "r"))
     (<Quantity 17.7 mag>, <Quantity 0.0244949 mag>)
 

@@ -19,16 +19,16 @@ class Band(StrEnum):
     y = "y"
 
     def __le__(self, band):
-        return self.wave < band.wave or self == band
+        return bool(self.wave < band.wave or self == band)
 
     def __lt__(self, band):
-        return self.wave < band.wave
+        return bool(self.wave < band.wave)
 
     def __ge__(self, band):
-        return self.wave > band.wave or self == band
+        return bool(self.wave > band.wave or self == band)
 
     def __gt__(self, band):
-        return self.wave > band.wave
+        return bool(self.wave > band.wave)
 
     def __repr__(self):
         return f"<Band: {self}, {self.wave}>"

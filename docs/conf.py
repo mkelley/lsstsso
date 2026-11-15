@@ -17,6 +17,7 @@ extensions = [
     "pytest_doctestplus.sphinx.doctestplus",
     "sphinx_automodapi.automodapi",
     "sphinx.ext.intersphinx",
+    "sphinxcontrib.globalsubs",
 ]
 numpydoc_show_class_members = False
 
@@ -59,6 +60,9 @@ global_substitutions: dict[str, str] = {
     "Quantity": ":class:`~astropy.units.Quantity`",
     "Unit": ":class:`~astropy.units.UnitBase`",
     "StructuredUnit": ":class:`~astropy.units.StructuredUnit`",
+    # lsstsso
+    "Color": ":class:`~lsstsso.color.color.Color`",
+    "ColorMatrix": ":class:`~lsstsso.color.color_matrix.ColorMatrix`",
 }
 
 links_to_become_substitutions: dict[str, str] = {
