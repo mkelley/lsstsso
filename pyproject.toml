@@ -52,7 +52,6 @@ zip-safe = false
 minversion = "8.0"
 testpaths = ["lsstsso", "docs"]
 norecursedirs = ["docs[\\/]_build"]
-astropy_header = true
 doctest_plus = "enabled"
 text_file_format = "rst"
 remote_data_strict = true

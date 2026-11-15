@@ -9,6 +9,7 @@ import time
 from contextlib import contextmanager
 from glob import glob
 from logging import getLogger
+from pathlib import Path
 from warnings import warn
 
 import pyvo as vo
@@ -27,6 +28,8 @@ __all__ = ["RSP", "provider"]
 
 class RSP:
     """Rubin Science Platform API interface."""
+
+    CACHE_DIR = Path.home() / ".cache" / "lsst-sso"
 
     def __init__(self) -> None:
         if RSPDiscovery is None:
@@ -107,7 +110,7 @@ class RSP:
     @staticmethod
     def clean_cache(max_age: float = 0):
         """Remove cache files older than max age days."""
-        files = glob(os.environ["HOME"] + "/.cache/lsst-sso/*ecsv")
+        files = glob(RSP.CACHE_DIR / "*ecsv")
         count = len(files)
         removed = 0
         for fn in files:
@@ -120,7 +123,7 @@ class RSP:
     @staticmethod
     def cache_file_name(query: str, **kwargs) -> str:
         hash = hashlib.md5(query.encode() + str(kwargs).encode())
-        return os.environ["HOME"] + "/.cache/lsst-sso/" + hash.hexdigest() + ".ecsv"
+        return RSP.CACHE_DIR / f"{hash.hexdigest()}.ecsv"
 
     @staticmethod
     def _cached_result(query: str, cache: bool, **kwargs):

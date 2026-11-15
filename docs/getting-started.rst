@@ -44,13 +44,11 @@ First, get a list of comets:
     >>> from lsstsso import get
     >>>
     >>> comets = get.comets()
-    >>> comets
-    <Table length=47>
-         ssObjectId     designation   nObs     arc     firstObservationMjdTai tisserand_J permid
-                                                d                                               
-           int64           str12     int32   float32            Time            float32    str4 
-    ------------------- ------------ ----- ----------- ---------------------- ----------- ------
-    5785498485624156464    P/1988 D1    11     22.9181     60847.158599118426     2.98857   110P
+    >>> print(comets)
+         ssObjectId     designation  nObs     arc     firstObservationMjdTai tisserand_J permid
+                                               d                d                              
+    ------------------- ------------ ---- ----------- ---------------------- ----------- ------
+    5785498485624156464    P/1988 D1   11     22.9181     60847.158599118426     2.98857   110P
     ...
 
 Next, get the lightcurve of an object.  The result is based on a join between the SSSource and DiaSource tables:
@@ -59,19 +57,6 @@ Next, get the lightcurve of an object.  The result is based on a join between th
 .. code-block:: python
 
     >>> lc = get.lightcurve(5785498485624156464)
-    Querying SSSource INNER JOIN DiaSource
-    
-    SELECT s.SSObjectId,d.midpointMjdTai,d.ra,d.dec,s.helioRange,s.topoRange,s.phaseAngle,s.elongation,s.ephRate,s.ephOffset,d.band,d.apFlux,d.apFluxErr,d.centroid_flag,d.pixelFlags FROM dp2.SSSource AS s
-    INNER JOIN dp2.DiaSource AS d on d.diaSourceId = s.diaSourceId
-    WHERE s.SSObjectId = 5785498485624156464
-    ORDER BY d.midpointMjdTai
-    
-    Query not cached ...
-    OK in 7.90 s
-    Caching result to ...
-
-.. doctest-remote-data::
-
     >>> print(lc)
          SSObjectId       midpointMjdTai           ra                 dec         helioRange topoRange ...
                                                   deg                 deg             AU         AU    ...
@@ -130,7 +115,7 @@ For example, with the lightcurve result above one can get the SSObject IDs with:
 .. doctest-remote-data::
 .. code-block:: python
 
-    >>> lc.ssObjectId
+    >>> lc.SSObjectId
     array([5785498485624156464, 5785498485624156464, 5785498485624156464,
            5785498485624156464, 5785498485624156464, 5785498485624156464,
            5785498485624156464, 5785498485624156464, 5785498485624156464,
@@ -168,21 +153,10 @@ TAP queries are cached by default, and the cache used whenever the query string 
 .. code-block:: python
 
     >>> lc = get.lightcurve(5785498485624156464)
-    Querying SSSource INNER JOIN DiaSource
-    
-    SELECT s.SSObjectId,d.midpointMjdTai,d.ra,d.dec,s.helioRange,s.topoRange,s.phaseAngle,s.elongation,s.ephRate,s.ephOffset,d.band,d.apFlux,d.apFluxErr,d.centroid_flag,d.pixelFlags FROM dp2.SSSource AS s
-    INNER JOIN dp2.DiaSource AS d on d.diaSourceId = s.diaSourceId
-    WHERE s.SSObjectId = 5785498485624156464
-    ORDER BY d.midpointMjdTai
-    
-    Returning cached result from ...
-
-To skip the caching system, set ``cached=False`` in the keyword arguments:
-
     >>> lc = get.lightcurve(5785498485624156464, cached=False)  # doctest: +SKIP
 
 To clear the cache, use the `~lsstsso.rsp.RSP` object's ``clean_cache`` function.  By default it removes all cached data.  It can also delete data older than a certain age:
 
     >>> from lsstsso.rsp import RSP
-    >>> RSP.clean_cache()  # doctest: +IGNORE_OUTPUT
+    >>> RSP.clean_cache()  # doctest: +SKIP
     114/114 cache files removed.

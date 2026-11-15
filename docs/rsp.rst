@@ -13,7 +13,7 @@ An `lsstsso.rsp.RSP` object handles the authentication, interaction, and job cle
 
     >>> from lsstsso.rsp import provider as rsp_provider
     >>>
-    >>> with rsp_provider() as rsp:
+    >>> with rsp_provider() as rsp:  # doctest: +SKIP
     ...     # do something
 
 Any valid ADQL query can be sent via the ``RSP`` object.  For example, query the Visit table for DP2 data around a point:
@@ -34,14 +34,21 @@ Any valid ADQL query can be sent via the ``RSP`` object.  For example, query the
     >>>
     >>> with rsp_provider() as rsp:
     ...     result = rsp.query_tap(query)
-    Query not cached ...
-    OK in 3.99 s
-    Caching result to ...
     >>> print(result)
         visit            ra                dec         band    expMidptMJD     
                         deg                deg                                 
     ------------- ---------------- ------------------- ---- ------------------ 
     2025071100809 52.8114941837909   -28.1345856747246    g  60868.33009929246 
+    ...
+
+Cached queries
+--------------
+
+All TAP queries are cached by default, and the cache used whenever the query string matches the cached query string.  To clear the cache, use the `~lsstsso.rsp.RSP` object's ``clean_cache`` function.  By default it removes all cached data.  It can also delete data older than a certain age:
+
+    >>> from lsstsso.rsp import RSP
+    >>> RSP.clean_cache()  # doctest: +SKIP
+    114/114 cache files removed.
 
 
 Reference/API

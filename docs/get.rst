@@ -28,16 +28,6 @@ The SSObject table may be queried with `lsstsso.get.ssobject`.  Constraints on t
     >>> 
     >>> result = get.ssobject("ssObjectId = 5785498485624156464")
     >>> print(result)
-    Querying SSObject LEFT JOIN numbered_identifications
-    
-    SELECT  s.ssObjectId,s.designation,s.nObs,s.arc,s.firstObservationMjdTai,s.tisserand_J,n.permid FROM dp2.SSObject AS s
-    LEFT JOIN dp2.numbered_identifications AS n
-    ON n.unpacked_primary_provisional_designation = s.designation
-    WHERE ssObjectId = 5785498485624156464
-    
-    Query not cached ...
-    OK in 3.77 s
-    Caching result to ...
          ssObjectId     designation nObs   arc   firstObservationMjdTai tisserand_J permid
                                             d              d                              
     ------------------- ----------- ---- ------- ---------------------- ----------- ------
@@ -50,16 +40,6 @@ Or, to get 10 objects with Jovian Tisserand values less than 2.9:
 
     >>> result = get.ssobject("s.tisserand_J < 2.9", top=10)
     >>> print(result)
-    Querying SSObject LEFT JOIN numbered_identifications
-    
-    SELECT TOP 10 s.ssObjectId,s.designation,s.nObs,s.arc,s.firstObservationMjdTai,s.tisserand_J,n.permid FROM dp2.SSObject AS s
-    LEFT JOIN dp2.numbered_identifications AS n
-    ON n.unpacked_primary_provisional_designation = s.designation
-    WHERE s.tisserand_J < 2.9
-    
-    Query not cached ...
-    OK in 7.69 s
-    Caching result to ...
          ssObjectId     designation  nObs    arc    firstObservationMjdTai tisserand_J permid
                                               d               d                              
     ------------------- ------------ ---- --------- ---------------------- ----------- ------
@@ -78,13 +58,11 @@ The query is based on a join between the `SSObject <https://sdm-schemas.lsst.io/
 .. code-block:: python
 
     >>> comets = get.comets()
-    >>> comets
-    <Table length=47>
-         ssObjectId     designation   nObs     arc     firstObservationMjdTai tisserand_J permid
-                                                d                                               
-           int64           str12     int32   float32            Time            float32    str4 
-    ------------------- ------------ ----- ----------- ---------------------- ----------- ------
-    5785498485624156464    P/1988 D1    11     22.9181     60847.158599118426     2.98857   110P
+    >>> print(comets)
+         ssObjectId     designation  nObs     arc     firstObservationMjdTai tisserand_J permid
+                                               d                d                              
+    ------------------- ------------ ---- ----------- ---------------------- ----------- ------
+    5785498485624156464    P/1988 D1   11     22.9181     60847.158599118426     2.98857   110P
     ...
 
 
@@ -97,19 +75,6 @@ With the SSObjectID of an object, one can get the linked SSSource/DiaSource phot
 .. code-block:: python
 
     >>> lc = get.lightcurve(5785498485624156464)
-    Querying SSSource INNER JOIN DiaSource
-    
-    SELECT s.SSObjectId,d.midpointMjdTai,d.ra,d.dec,s.helioRange,s.topoRange,s.phaseAngle,s.elongation,s.ephRate,s.ephOffset,d.band,d.apFlux,d.apFluxErr,d.centroid_flag,d.pixelFlags FROM dp2.SSSource AS s
-    INNER JOIN dp2.DiaSource AS d on d.diaSourceId = s.diaSourceId
-    WHERE s.SSObjectId = 5785498485624156464
-    ORDER BY d.midpointMjdTai
-    
-    Query not cached ...
-    OK in 7.90 s
-    Caching result to ...
-
-.. doctest-remote-data::
-
     >>> print(lc)
          SSObjectId       midpointMjdTai           ra                 dec         helioRange topoRange ...
                                                   deg                 deg             AU         AU    ...
@@ -128,19 +93,10 @@ The Minor Planet Center's orbit table is on the RSP, and may be queried with `ls
 
     >>> orbit = get.orbit("designation = 'P/1988 D1'")
     >>> print(orbit)
-    Querying mpc_orbit
-    
-    SELECT  designation,epoch_mjd,a,q,e,i,node,argperi,peri_time,a1,a2,a3,dt,period,nobs_total FROM dp2.mpc_orbits
-    WHERE designation = 'P/1988 D1'
-    
-    Query not cached ...
-    OK in 4.97 s
-    Caching result to ...
     designation epoch_mjd  a         q                 e                i         ...
                            AU        AU                                deg        ...
     ----------- --------- --- ---------------- ----------------- ---------------- ...
-      P/1988 D1   61000.0 nan 2.45298759313139 0.319253973199543 11.7119257450699 ...
-
+      P/1988 D1   61000.0 0.0 2.45298759313139 0.319253973199543 11.7119257450699 ...
 
 Query for photometry by sky position
 ====================================
@@ -153,6 +109,7 @@ Query for photometry by sky position
 
 .. doctest-remote-data::
 
+    >>> import astropy.units as u
     >>> from astropy.table import Table
     >>>
     >>> ra = [287.2315412417827] * u.deg
@@ -160,14 +117,6 @@ Query for photometry by sky position
     >>> sources = Table([ra, dec], names=["ra", "dec"])
     >>>
     >>> result = get.phot_by_positions(sources)
-    Querying DiaSource for 1 user coordinates within 1.0 arcsec
-            ra                dec        
-           deg                deg        
-    ----------------- -------------------
-    287.2315412417827 -23.851685147435273
-    Query not cached ...
-    OK in 171.34 s
-    Caching result to ...
     >>> print(result)
          query_ra          query_dec              ra                dec         band ...
            deg                deg                deg                deg              ...

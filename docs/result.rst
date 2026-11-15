@@ -17,19 +17,6 @@ For example, get a list of Solar System objects in DP2 with cometary designation
     >>> from lsstsso import get
     >>>
     >>> comets = get.comets()
-    Querying SSObject LEFT JOIN numbered_identifications
-    
-    SELECT  s.ssObjectId,s.designation,s.nObs,s.arc,s.firstObservationMjdTai,s.tisserand_J, ...
-    LEFT JOIN dp2.numbered_identifications AS n
-    ON n.unpacked_primary_provisional_designation = s.designation
-    WHERE s.designation LIKE 'C/%' OR s.designation LIKE 'P/%' OR s.designation LIKE 'A/%'
-    
-    Query not cached ...
-    OK in 8.18 s
-    Caching result to ...
-
-.. doctest-remote-data::
-    
     >>> comets
     <Result: ssObjectId,designation,nObs,arc,firstObservationMjdTai,tisserand_J,permid>
 
@@ -109,10 +96,11 @@ Or, use :func:`~lsstsso.result.Result.as_table` to get the data as an astropy `~
     >>> tab = comets.as_table()
     >>> tab
     <Table length=47>
-         ssObjectId     designation   nObs    arc     firstObservationMjdTai tisserand_J ...
-                                               d                d                        ...           int64           str16     int32  float32          float64           float32   str16 
-    ------------------- ------------ ----- ---------- ---------------------- ----------- ...
-    5785498485624156464    P/1988 D1    11    22.9181     60847.158599118426     2.98857 ...
+         ssObjectId     designation   nObs     arc     firstObservationMjdTai tisserand_J permid
+                                                d                d                              
+           int64           str12     int32   float32          float64           float32    str4 
+    ------------------- ------------ ----- ----------- ---------------------- ----------- ------
+    5785771130468382804 P/2000 WT168    57     56.8895     60823.328466791805     2.71072   150P
     ...
 
 
