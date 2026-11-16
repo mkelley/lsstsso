@@ -22,6 +22,7 @@ homepage = "https://github.com/mkelley/lsstsso"
 test = [
     "coverage",
     "pytest>=8.0",
+    "pytest-cov>=7.0",
     "pytest-doctestplus>=1.7.0",
     "pytest-remotedata",
     "tox>=4.33",

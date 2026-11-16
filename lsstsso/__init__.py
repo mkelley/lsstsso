@@ -19,5 +19,5 @@ __all__ = [
 
 try:
     __version__ = _version(__name__)
-except PackageNotFoundError:
+except PackageNotFoundError:  # pragma: no cover
     pass
