@@ -15,6 +15,8 @@ Introduction
 
 The `lsstsso.get` module is currently designed for the `Data Preview 2 <https://sdm-schemas.lsst.io/dp2.html>`_ catalogs.  Fetching data from other `Science Data Model Schemas <https://sdm-schemas.lsst.io/>`_ should be possible with the `lsstsso.rsp` submodule.
 
+You'll want to have those [RSP DP2 schemas](https://sdm-schemas.lsst.io/dp2.html) on hand for reference.
+
 
 Query the SSObject table
 ========================
