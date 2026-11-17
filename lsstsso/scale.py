@@ -1,12 +1,13 @@
 from collections.abc import Callable
-from itertools import pairwise
+from warnings import warn
 
 import astropy.units as u
 import numpy as np
 from sbpy.activity import phase_HalleyMarcus
 
 from .band import Band
-from .color import Color
+from .color.measure import measure
+from .color.solve import solve
 
 
 def activity(
@@ -54,66 +55,44 @@ def color(
     m: u.Quantity[u.mag],
     unc: u.Quantity[u.mag],
     bands: np.ndarray[Band],
-    anchor: Band | str | None = None,
-) -> list[Color]:
-    """Calculate colors from observations.
+    anchor: Band | str,
+) -> tuple[u.Quantity, u.Quantity]:
+    """Scale factor (mag) accounting for color.
 
 
     Parameters
     ----------
-    m : Quantity
+    m : |Quantity|
         Apparent magnitudes.
 
-    unc : Quantity
+    unc : |Quantity|
         Uncertainties on ``m``.
 
-    bands : array of Band
+    bands : array of |Band|
         The observational bands for each ``m``.
 
-    anchor : Band or str, optional
-        Measure with respect to this band.
+    anchor : |Band| or str
+        Scale to this band.
 
 
     Returns
     -------
-    colors: list of Color
-        Measured colors.
+    scale, scale_unc : |Quantity|
+        The scale factors and uncertainties.
 
     """
 
-    m = u.Quantity(m, u.mag)
-    unc = u.Quantity(unc, u.mag)
+    warn("lsstsso.scale.color does not yet account for correlations between colors.")
 
-    # averaged apparent magnitude
-    avg = {}
-    avg_unc = {}
+    cm, _, _ = solve(measure(m, unc, bands))
+    scale = np.zeros_like(m)
+    scale_unc = np.zeros_like(unc)
+    bands = np.array(bands)
     for band in set(bands):
-        # find all observations in this band
-        i = np.array(bands) == band
+        i = bands == band
+        scale[i], scale_unc[i] = cm.transform(0 * u.mag, 0 * u.mag, band, anchor)
 
-        # average them together
-        avg[band], avg_unc[band] = weighted_mean(m[i], unc[i])
-
-    # setup color pairs
-    if anchor is None:
-        pairs = pairwise(bands)
-    else:
-        anchor = Band(anchor)
-        pairs = [(band, anchor) for band in bands if band != anchor]
-
-    # calculate colors
-    colors = []
-    for left, right in pairs:
-        colors.append(
-            Color(
-                left,
-                right,
-                avg[left] - avg[right],
-                np.hypot(avg_unc[left], avg_unc[right]),
-            )
-        )
-
-    return colors
+    return scale, scale_unc
 
 
 def geometry(
@@ -164,13 +143,3 @@ def geometry(
         + 2.5 * delta_slope * np.log10(delta / u.au)
         + 2.5 * np.log10(Phi(phase) / Phi(0 * u.deg))
     )
-
-
-def weighted_mean(x, unc):
-    i = np.isfinite(x * unc)
-
-    if i.sum() == 0:
-        return np.nan, np.nan
-
-    m, sw = np.average(x[i], weights=unc[i] ** -2, returned=True)
-    return m, sw**-0.5

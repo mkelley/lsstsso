@@ -1,8 +1,12 @@
+import typing
+
 import astropy.units as u
 import numpy as np
 
 from ..band import Band
-from .color_matrix import ColorMatrix
+
+if typing.TYPE_CHECKING:
+    from .color_matrix import ColorMatrix
 
 
 def transform(
@@ -10,7 +14,7 @@ def transform(
     unc: u.Quantity,
     from_band: Band | str,
     to_band: Band | str,
-    color_matrix: ColorMatrix,
+    color_matrix: "ColorMatrix",
 ) -> tuple[u.Quantity, u.Quantity]:
     """Transform a band to another.
 
@@ -49,6 +53,9 @@ def transform(
         ``color_matrix``.
 
     """
+
+    if from_band == to_band:
+        return m, unc
 
     color = color_matrix[from_band, to_band]
     if color is np.ma.masked:

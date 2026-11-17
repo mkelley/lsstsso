@@ -1,12 +1,8 @@
 import astropy.units as u
 import numpy as np
 import pytest
-from astropy.coordinates import SkyCoord
-from astropy.table import Table
 
-from ..band import Band
-from ..color import Color
-from ..scale import activity, color, geometry, weighted_mean
+from ..scale import activity, color, geometry
 
 
 def test_activity():
@@ -28,13 +24,28 @@ def test_color():
     unc = [0.01, 0.02, 0.04] * u.mag
     bands = ["u", "g", "r"]
 
-    colors = color(m, unc, bands)
-    assert colors[0] == Color("u", "g", -1, np.hypot(0.01, 0.02))
-    assert colors[1] == Color("g", "r", -2, np.hypot(0.02, 0.04))
+    scale, _ = color(m, unc, bands, "r")
+    assert u.allclose(scale, [3, 2, 0] * u.mag)
 
-    colors = color(m, unc, bands, anchor="r")
-    assert colors[0] == Color("u", "r", -3, np.hypot(0.01, 0.04))
-    assert colors[1] == Color("g", "r", -2, np.hypot(0.02, 0.04))
+
+@pytest.mark.xfail
+def test_color_uncertainties():
+    m = [1, 2, 4] * u.mag
+    unc = [0.01, 0.02, 0.04] * u.mag
+    bands = ["u", "g", "r"]
+
+    _, scale_unc = color(m, unc, bands, "r")
+
+    # these uncertainties are not right, u-g and g-r should be correlated
+    assert u.allclose(
+        scale_unc,
+        [
+            np.hypot(0.02, 0.04),
+            np.hypot(0.01, 0.02),
+            0,
+        ]
+        * u.mag,
+    )
 
 
 def test_geometry():
@@ -60,29 +71,3 @@ def test_geometry():
         - np.array([0, 0.4, 0.8])
     )
     assert np.allclose(scale, expected)
-
-
-def test_weighted_mean():
-    x = np.array([1, 2])
-    xunc = np.array([0.01, 0.01])
-    m, munc = weighted_mean(x, xunc)
-    assert np.isclose(m, 1.5)
-    assert np.isclose(munc, np.sqrt(2) / 2 * 0.01)
-
-    x = np.array([1, 2, np.nan])
-    xunc = np.array([0.01, 0.01, 1])
-    m, munc = weighted_mean(x, xunc)
-    assert np.isclose(m, 1.5)
-    assert np.isclose(munc, np.sqrt(2) / 2 * 0.01)
-
-    x = np.array([np.nan, np.nan, np.nan])
-    xunc = np.array([0.01, 0.01, 1])
-    m, munc = weighted_mean(x, xunc)
-    assert np.isnan(m)
-    assert np.isnan(munc)
-
-    x = np.array([1, 2])
-    xunc = np.array([0.01, 0.02])
-    m, munc = weighted_mean(x, xunc)
-    assert np.isclose(m, 1.2)
-    assert np.isclose(munc, 0.00894427190999916)

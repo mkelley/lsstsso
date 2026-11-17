@@ -49,6 +49,7 @@ from numpy.ma.core import MaskedConstant
 
 from ..band import Band
 from .color import Color
+from .transform import transform
 
 
 class ColorMatrix:
@@ -197,8 +198,6 @@ class ColorMatrix:
             If the transformation between these bands is not possible.
 
         """
-
-        from .transform import transform
 
         return transform(m, unc, from_band, to_band, self)
 
