@@ -1,10 +1,12 @@
 from collections.abc import Callable
+from itertools import pairwise
 
 import astropy.units as u
 import numpy as np
 from sbpy.activity import phase_HalleyMarcus
 
 from .band import Band
+from .color import Color
 
 
 def activity(
@@ -31,8 +33,9 @@ def activity(
         Scale by rh**rh_slope.
 
     delta_slope : float
-        -1 for comets with a 1/rho coma, measured with fixed angular aperture
-        photometry.
+        -1 is recommended for comets with a 1/rho coma, measured with fixed
+        angular aperture photometry.  -2 is recommended for comets measured with
+        fixed linear aperture.
 
 
     Returns
@@ -51,11 +54,9 @@ def color(
     m: u.Quantity[u.mag],
     unc: u.Quantity[u.mag],
     bands: np.ndarray[Band],
-    anchor: Band | str = Band.r,
-):
-    """Scale factor (mag) accounting for color.
-
-    The scale factors scale ``m`` to the color of ``anchor``.
+    anchor: Band | str | None = None,
+) -> list[Color]:
+    """Calculate colors from observations.
 
 
     Parameters
@@ -69,18 +70,16 @@ def color(
     bands : array of Band
         The observational bands for each ``m``.
 
-    anchor : Band or str
-        The band to anchor to.
+    anchor : Band or str, optional
+        Measure with respect to this band.
 
 
     Returns
     -------
-    scale : dict
-        Scale factor to match the anchor bandpass in magnitudes.
+    colors: list of Color
+        Measured colors.
 
     """
-
-    anchor = Band(anchor)
 
     m = u.Quantity(m, u.mag)
     unc = u.Quantity(unc, u.mag)
@@ -90,29 +89,31 @@ def color(
     avg_unc = {}
     for band in set(bands):
         # find all observations in this band
-        i = bands == band
+        i = np.array(bands) == band
 
         # average them together
         avg[band], avg_unc[band] = weighted_mean(m[i], unc[i])
 
+    # setup color pairs
+    if anchor is None:
+        pairs = pairwise(bands)
+    else:
+        anchor = Band(anchor)
+        pairs = [(band, anchor) for band in bands if band != anchor]
+
     # calculate colors
-    color = {}
-    color_unc = {}
-    for band in Band:
-        if band == anchor:
-            color[band] = 0
-            color_unc[band] = 0
-            continue
+    colors = []
+    for left, right in pairs:
+        colors.append(
+            Color(
+                left,
+                right,
+                avg[left] - avg[right],
+                np.hypot(avg_unc[left], avg_unc[right]),
+            )
+        )
 
-        if band not in bands:
-            color[band] = np.ma.masked
-            color_unc[band] = np.ma.masked
-            continue
-
-        color[band] = float(avg[anchor] - avg[band])
-        color_unc[band] = float(np.hypot(avg_unc[band], avg_unc[anchor]))
-
-    return color, color_unc
+    return colors
 
 
 def geometry(
@@ -122,7 +123,7 @@ def geometry(
     activity_slope: float = 0,
     delta_slope: float = -1,
     Phi: Callable = phase_HalleyMarcus,
-):
+) -> u.Quantity[u.mag]:
     """Scale factor (mag) accounting for geometry.
 
     Use this scale factor to transform apparent magnitude to absolute magnitude.
@@ -143,7 +144,9 @@ def geometry(
         Power-law slope for activity scale factor with rh.
 
     delta_slope : int or float
-        Power-law slope for delta, e.g., -1 for comae, or -2 for nuclei.
+        Power-law slope for delta, e.g., -1 recommended for comae measured with
+        fixed angular apertures, or -2 recommended for comae measured with fixed
+        linear apertures.  -2 for nuclei.
 
     Phi : callable
         Linear phase function.
@@ -159,13 +162,15 @@ def geometry(
     return (
         (-5 + 2.5 * activity_slope) * np.log10(rh / u.au)
         + 2.5 * delta_slope * np.log10(delta / u.au)
-        + 2.5 * (Phi(phase) / Phi(0))
+        + 2.5 * np.log10(Phi(phase) / Phi(0 * u.deg))
     )
 
 
 def weighted_mean(x, unc):
     i = np.isfinite(x * unc)
+
     if i.sum() == 0:
         return np.nan, np.nan
+
     m, sw = np.average(x[i], weights=unc[i] ** -2, returned=True)
     return m, sw**-0.5

@@ -3,7 +3,7 @@ from typing import Any, overload
 
 import astropy.units as u
 import numpy as np
-from astropy.table import Table
+from astropy.table import Column, Table
 from astropy.time import Time
 
 from .band import Band
@@ -14,11 +14,20 @@ __all__ = ["Result"]
 class Result:
     """Tabular data in a convenient attribute-based wrapper.
 
+    Primarily designed for results from the Rubin Science Platform.
+
 
     Parameters
     ----------
     table : `~astropy.table.Table`
-        Column names will be used as the ``Result`` attributes.
+        Column names will be used as the ``Result`` attributes.  The following
+        columns will be implicitly converted from arrays to new objects, as
+        needed:
+            * "midpointMjdTai" to `~astropy.time.Time` (TAI scale)
+            * "expMidptMJD" to `~astropy.time.Time` (TAI scale)
+            * "peri_time" to `~astropy.time.Time` (TT scale)
+            * "epoch_mjd" to `~astropy.time.Time` (TT scale)
+            * "band" to `~lsstsso.band.Band`
 
     """
 
@@ -26,39 +35,76 @@ class Result:
         self._columns = table.colnames
 
         for col in table.columns:
-            if col == "midpointMjdTai" or col == "expMidptMJD":
+            if (col == "midpointMjdTai" or col == "expMidptMJD") and not isinstance(
+                table[col], Time
+            ):
                 data = Time(table[col], scale="tai", format="mjd")
-            elif col in ("peri_time", "epoch_mjd"):
+            elif col in ("peri_time", "epoch_mjd") and not isinstance(table[col], Time):
                 data = Time(table[col], scale="tt", format="mjd")
-            elif col == "band":
+            elif col == "band" and not isinstance(table[col], Band):
                 data = np.array([Band[b] for b in table[col]])
-            elif table[col].unit is None:
+            elif hasattr(table[col], "unit") and table[col].unit is not None:
+                data = table[col].quantity
+            elif isinstance(table[col], Column):
                 data = table[col].data
             else:
-                data = table[col].quantity
-
-            if hasattr(data, "mask") and not any(data.mask):
-                if hasattr(data, "unmasked"):
-                    data = data.unmasked
-                else:
-                    data = data.data
+                data = table[col]
 
             setattr(self, col, data)
+
+    @classmethod
+    def from_arrays(cls, **kwargs) -> "Result":
+        """Initialize from arrays via key-value pairs.
+
+
+        Examples
+        --------
+
+        >>> from lsstsso.result import Result
+        >>>
+        >>> result = Result.from_arrays(a=[1, 2], b=[3, 4])
+        >>> result.a
+        array([1, 2])
+
+        """
+
+        return Result(Table(list(kwargs.values()), names=list(kwargs)))
+
+    @classmethod
+    def from_rows(cls, rows: list[dict]) -> "Result":
+        """Initialize from a list of dictionaries.
+
+
+        Parameters
+        ----------
+        rows : list of dict
+            List of data rows as dictionaries.
+
+
+        Examples
+        --------
+
+        >>> from lsstsso.result import Result
+        >>>
+        >>> result = Result.from_rows([{"a": 1, "b": 2}, {"a": 3, "b": 4}])
+        >>> result.a
+        array([1, 3])
+
+        """
+
+        return Result(Table(rows))
 
     def _asdict(self) -> dict:
         return {col: self[col] for col in self.columns}
 
     @overload
-    def __getitem__(self, key: int) -> Any:
-        pass
+    def __getitem__(self, key: int) -> Any: ...
 
     @overload
-    def __getitem__(self, key: slice | list | np.ndarray) -> "Result":
-        pass
+    def __getitem__(self, key: slice | list | np.ndarray) -> "Result": ...
 
     @overload
-    def __getitem__(self, key: str) -> u.Quantity | np.ndarray:
-        pass
+    def __getitem__(self, key: str) -> u.Quantity | np.ndarray: ...
 
     def __getitem__(self, key):
         """Get a column or a new result from a row or rows.
@@ -66,7 +112,7 @@ class Result:
 
         Parameters
         ----------
-        key : int, slice, or str
+        key : int, slice, array, or str
             * For integers: returns a single row of data as a new ``ResultRow``.
             * For slices: returns a new ``Result`` based on the slice.
             * For lists or arrays: returns a new ``Result`` based on the
@@ -86,12 +132,16 @@ class Result:
             )
 
         if isinstance(key, int | slice | list | np.ndarray):
-            values = [self[col][key] for col in self.columns]
-            return Result(Table(values, names=self.columns))
+            return Result.from_arrays(
+                **{name: getattr(self, name)[key] for name in self.columns}
+            )
 
         return getattr(self, key)
 
     def __len__(self):
+        if len(self.columns) == 0:
+            return 0
+
         n = [len(self[col]) for col in self.columns]
         lengths = set(n)
         if len(lengths) != 1:
@@ -106,10 +156,7 @@ class Result:
         return "\n".join(self.as_table().pformat())
 
     def as_table(self):
-        tab = Table(self._asdict())
-        if "band" in tab.columns and isinstance(tab["band"][0], Band):
-            tab["band"] = [str(b) for b in tab["band"]]
-        return tab
+        return Table(self._asdict())
 
     @property
     def columns(self) -> list[str]:

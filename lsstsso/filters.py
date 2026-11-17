@@ -10,30 +10,33 @@ from .result import Result
 def sky(
     coords: SkyCoord,
     result: Result,
-):
+) -> Result:
     """Find nearest neighbors on the sky.
 
 
     Parameters
     ----------
     coords : SkyCoord
-        The nominal coordinates of interest.
+        The coordinates of interest.
 
     result : Result
-        An RSP result.  Columns "ra", "dec", and "midpointMjdTai" will be used.
+        An RSP result.  Columns "ra" and "dec" will be used.
 
 
     Returns
     -------
-    matches : Table
-        A row for each matched coordinate in ``coords`` containing the array
-        index from ``coords``, a copy of the coordinate, the index of the
-        nearest result, the identified nearest result coordinate, and the
-        angular separation.
+    matches : Result
+        Attributes / columns:
+            * ``n``: input coordinate array index number
+            * ``coords``: input coordinate
+            * ``nearest``: index of the nearest coordinate
+            * ``nearest_coords``: nearest coordinate
+            * ``sep``: angular distance to nearest coordinate
+            * ``pa``: position angle to nearest coordinate
 
     """
 
-    if not (set(result.columns) & {"ra", "dec"}):
+    if len(set(result.columns) & {"ra", "dec"}) != 2:
         raise KeyError("ra and/or dec not in result")
 
     coords_r = SkyCoord(result["ra"], result["dec"])
@@ -43,54 +46,61 @@ def sky(
         sep = c.separation(coords_r)
         d = np.min(sep)
         nearest = np.argmin(sep)
+        pa = c.position_angle(coords_r[nearest])
 
         matches.append(
             {
                 "n": n,
                 "coords": c,
                 "nearest": nearest,
-                "nearest coords": coords_r[nearest],
+                "nearest_coords": coords_r[nearest],
                 "sep": d.to("arcsec"),
+                "pa": pa,
             }
         )
 
-    return Table(matches)
+    return Result(Table(matches))
 
 
 def sky_and_time(
     coords: SkyCoord,
     t: Time,
-    tol: u.Quantity,
     result: Result,
-):
+    tol: u.Quantity = 15 * u.s,
+) -> Result:
     """Find nearest neighbors on the sky and within a time tolerance.
 
 
     Parameters
     ----------
     coords : SkyCoord
-        The nominal coordinates of interest.
+        The coordinates of interest.
 
     t : Time
         The time for each coordinate.
 
-    tol : Quantity
-        The time tolerance.  Try 1 s or less for DiaSource sources, or 15 s for
-        Source sources. May be an array for a different tolerance with each
-        ``coords``.
-
     result : Result
-        An RSP result.  Columns "ra", "dec", and "midpointMjdTai"/"mid will be
-        used.
+        An RSP result.  Columns "ra", "dec", and "midpointMjdTai"/"expMidptMJD"
+        will be used.
+
+    tol : Quantity
+        The time tolerance.  Default is 15 s.  May be an array for a different
+        tolerance with each ``coords``.
 
 
     Returns
     -------
-    matches : Table
-        A row for each matched coordinate in ``coords`` containing the array
-        index from ``coords``, a copy of the coordinate and time, the index of
-        the nearest result, the identified nearest result coordinate, the
-        difference in time, and the angular separation.
+    matches : Result
+        Attributes / columns:
+            * ``n``: input coordinate array index number
+            * ``coords``: input coordinate
+            * ``t``: input time,
+            * ``nearest``: index of the nearest coordinate
+            * ``nearest_coords``: nearest coordinate
+            * ``nearest_t``: nearest coordinate's time
+            * ``dt``: time difference to nearest coordinate
+            * ``sep``: angular distance to nearest coordinate
+            * ``pa``: position angle to nearest coordinate
 
     """
 
@@ -128,6 +138,7 @@ def sky_and_time(
         nearest_sep = sep[nearest]
         nearest_pa = c.position_angle(coords_r[i][nearest])
         nearest_result_index = np.flatnonzero(i)[nearest]
+        nearest_time = t_r[i][nearest]
 
         matches.append(
             {
@@ -135,11 +146,12 @@ def sky_and_time(
                 "coords": c,
                 "t": t[n],
                 "nearest": nearest_result_index,
-                "nearest coords": coords_r[nearest_result_index],
+                "nearest_coords": coords_r[nearest_result_index],
+                "nearest_t": nearest_time,
                 "dt": dt[nearest_result_index],
                 "sep": nearest_sep.to("arcsec"),
                 "pa": nearest_pa.to("deg"),
             }
         )
 
-    return Table(matches)
+    return Result.from_rows(matches)
