@@ -4,6 +4,9 @@
 Fetching data with `lsstsso.rsp`
 ********************************
 
+Introduction
+============
+
 `lsstsso.rsp` fetches data from the Rubin Science Platform (RSP) Table Access Protocol (TAP) services.  This is a lower level interface than `lsstsso.get` that can send any ADQL commands to the RSP and format the result as tabular data.  It can also cache queries locally to avoid repeated interaction with the RSP.
 
 An `lsstsso.rsp.RSP` object handles the authentication, interaction, and job clean-up.  Generally this object is obtained via a context manager:
@@ -42,7 +45,7 @@ Any valid ADQL query can be sent via the ``RSP`` object.  For example, query the
     ...
 
 Cached queries
---------------
+==============
 
 All TAP queries are cached by default, and the cache used whenever the query string matches the cached query string.  To clear the cache, use the `~lsstsso.rsp.RSP` object's ``clean_cache`` function.  By default it removes all cached data.  It can also delete data older than a certain age:
 

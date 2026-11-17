@@ -52,6 +52,23 @@ The value and uncertainty are the ``index`` and ``unc`` attributes:
     >>> color.unc
     <Quantity 0.01 mag>
 
+Colors and be calculated from an array of brightness measurements:
+
+.. code-block:: python
+
+    >>> from lsstsso.color import measure
+    >>>
+    >>> m = [16.5, 16.0, 16.4]
+    >>> unc = [0.01, 0.01, 0.01]
+    >>> bands = ["u", "r", "g"]
+    >>>
+    >>> print(measure(m, unc, bands))
+    [<Color u-g = 0.100 ± 0.014 mag>, <Color g-r = 0.400 ± 0.014 mag>]
+
+.. attention::
+
+    The colors calculated from more than three bands will have correlated uncertainties, but these are not yet calculated by :func:`~lsstsso.color.measure`.
+
 
 Multiple colors
 ===============
