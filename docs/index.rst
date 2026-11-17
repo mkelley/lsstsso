@@ -6,6 +6,7 @@ The ``lsstsso`` package contains methods and classes designed for the analysis o
 The data interface is designed in an attempt to be simple and useful in interactive sessions.  If you need something efficient or suitable for large scales, maybe try something else.
 
 Features:
+
 * Query caching.
 * Convenience functions for common queries.
 * Result objects designed for column-based and row-based inspection.
