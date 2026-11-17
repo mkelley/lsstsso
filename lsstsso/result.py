@@ -23,6 +23,7 @@ class Result:
         Column names will be used as the ``Result`` attributes.  The following
         columns will be implicitly converted from arrays to new objects, as
         needed:
+
             * "midpointMjdTai" to `~astropy.time.Time` (TAI scale)
             * "expMidptMJD" to `~astropy.time.Time` (TAI scale)
             * "peri_time" to `~astropy.time.Time` (TT scale)

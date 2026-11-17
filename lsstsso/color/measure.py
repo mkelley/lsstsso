@@ -54,7 +54,7 @@ def measure(
 
     # setup color pairs
     if anchor is None:
-        pairs = pairwise(bands)
+        pairs = pairwise(sorted({Band(b) for b in bands}))
     else:
         anchor = Band(anchor)
         pairs = [(band, anchor) for band in bands if band != anchor]
