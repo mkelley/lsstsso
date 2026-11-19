@@ -1,7 +1,6 @@
 import astropy.units as u
 import numpy as np
 
-from ..color import Color
 from ..measure import measure
 
 
@@ -10,10 +9,19 @@ def test_measure():
     unc = [0.01, 0.04, 0.02] * u.mag
     bands = ["u", "r", "g"]
 
-    colors = measure(m, unc, bands)
-    assert colors[0] == Color("u", "g", -1, np.hypot(0.01, 0.02))
-    assert colors[1] == Color("g", "r", -2, np.hypot(0.02, 0.04))
+    cm = measure(m, unc, bands)
+    i = [0, 1, 5]  # u-g, u-r, g-r
+    assert np.allclose(cm.index[i], [-1, -3, -2])
 
-    colors = measure(m, unc, bands, anchor="r")
-    assert colors[0] == Color("u", "r", -3, np.hypot(0.01, 0.04))
-    assert colors[1] == Color("g", "r", -2, np.hypot(0.02, 0.04))
+    vu, vg, vr = 0.01**2, 0.02**2, 0.04**2  # var
+
+    expected = [
+        [vu + vg, vu, -vg],
+        [vu, vu + vr, vr],
+        [-vg, vr, vg + vr],
+    ]
+    assert np.allclose(cm.cov[i][:, i], expected)
+
+    # everything else should be masked
+    assert cm.index.mask.sum() == 15 - 3
+    assert cm.cov.mask.sum() == 15 * 15 - 9

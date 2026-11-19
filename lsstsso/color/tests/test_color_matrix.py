@@ -1,6 +1,5 @@
 import astropy.units as u
 import numpy as np
-from numpy.linalg import norm
 
 from ...band import Band
 from ..color import Color

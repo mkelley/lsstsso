@@ -75,14 +75,14 @@ class ColorMatrix:
 
     def __init__(self, index: np.ndarray | None = None, unc: np.ndarray | None = None):
         if index is None:
-            self.index = MaskedArray(np.zeros(15), masked=np.ones(15, bool))
+            self.index = MaskedArray(np.zeros(15), mask=np.ones(15, bool))
         elif np.shape(index) != (15,):
             raise ValueError("index must have length 15")
         else:
             self.index = MaskedArray(index)
 
         if unc is None:
-            self.cov = MaskedArray(np.zeros((15, 15)), masked=np.ones((15, 15), bool))
+            self.cov = MaskedArray(np.zeros((15, 15)), mask=np.ones((15, 15), bool))
         elif np.shape(unc) == (15,):
             self.cov = np.ma.diag(unc**2)
         elif np.shape(unc) == (15, 15):
@@ -108,25 +108,30 @@ class ColorMatrix:
 
         """
 
-        index = MaskedArray(np.zeros(15), mask=np.ones(15, bool))
-        unc = MaskedArray(np.zeros(15), mask=np.ones(15, bool))
+        # index = MaskedArray(np.zeros(15), mask=np.ones(15, bool))
+        # unc = MaskedArray(np.zeros(15), mask=np.ones(15, bool))
 
+        cm = ColorMatrix()
         for color in colors:
-            if color.left < color.right:
-                blue = color.left
-                red = color.right
-                scale = 1
-            else:
-                blue = color.right
-                red = color.left
-                scale = -1
+            cm.set(color.mean())
 
-            i = cls.bands_to_array_index(blue, red)
-            avg = color.mean()
-            index[i] = scale * avg.index.value
-            unc[i] = avg.unc.value
+        return cm
 
-        return ColorMatrix(index, unc)
+        #     if color.left < color.right:
+        #         blue = color.left
+        #         red = color.right
+        #         scale = 1
+        #     else:
+        #         blue = color.right
+        #         red = color.left
+        #         scale = -1
+
+        #     i = cls.bands_to_array_index(blue, red)
+        #     avg = color.mean()
+        #     index[i] = scale * avg.index.value
+        #     unc[i] = avg.unc.value
+
+        # return ColorMatrix(index, unc)
 
     @property
     def unc(self) -> MaskedArray:
@@ -145,6 +150,76 @@ class ColorMatrix:
     def __len__(self):
         """Number of independent and unmasked colors."""
         return np.sum(~self.index.mask)
+
+    def __iter__(self) -> Iterator[Color]:
+        """Iterate over the unmasked colors."""
+        for i in range(15):
+            if self.index.mask[i]:
+                continue
+            left, right = self.array_index_to_bands(i)
+            yield Color(left, right, self.index[i], self.unc[i])
+
+    def __getitem__(self, bands: tuple[Band | str, Band | str]) -> Color:
+        """a - b color.
+
+
+        Parameters
+        ----------
+        left, right : |Band| or str
+
+
+        Returns
+        -------
+        color : |Color|
+            The left-right color.
+
+        """
+
+        a, b = [Band(b) for b in bands]
+        i = self.bands_to_array_index(a, b)
+
+        scale = 1
+        if a > b:
+            b, a = a, b
+            scale = -1
+
+        return Color(a, b, scale * self.index[i], self.unc[i])
+
+    def __setitem__(
+        self,
+        bands: tuple[Band | str, Band | str],
+        value: tuple[u.Quantity, u.Quantity],
+    ) -> None:
+        """Set a - b color.
+
+
+        Parameters
+        ----------
+        bands : tuple of |Band| or str
+            The color to set: ``bands[0] - bands[1]``.
+
+        value : tuple of |Quantity|
+            The value and uncertainty.
+
+
+        Examples
+        --------
+        >>> from lsstsso.color import ColorMatrix
+        >>> cm = ColorMatrix()
+        >>> cm["g", "r"] = 0.4 * u.mag, 0.01 * u.mag
+
+        """
+
+        a, b = [Band(b) for b in bands]
+        i = self.bands_to_array_index(a, b)
+
+        scale = 1
+        if a > b:
+            b, a = a, b
+            scale = -1
+
+        self.index[i] = scale * value[0].to_value("mag")
+        self.cov[i, i] = value[1].to_value("mag") ** 2
 
     @staticmethod
     def bands_to_array_index(blue: Band | str, red: Band | str) -> int:
@@ -186,39 +261,17 @@ class ColorMatrix:
 
         return list(combinations(Band, 2))[i]
 
-    def __getitem__(self, bands: tuple[Band | str, Band | str]) -> Color:
-        """a - b color.
+    def set(self, color: Color) -> None:
+        """Set a color.
 
 
         Parameters
         ----------
-        left, right : |Band| or str
-
-
-        Returns
-        -------
-        color : |Color|
-            The left-right color.
+        color : Color
 
         """
 
-        a, b = bands
-        i = self.bands_to_array_index(a, b)
-
-        scale = 1
-        if a > b:
-            b, a = a, b
-            scale = -1
-
-        return Color(a, b, scale * self.index[i], self.unc[i])
-
-    def __iter__(self) -> Iterator[Color]:
-        """Iterate over the unmasked colors."""
-        for i in range(15):
-            if self.index.mask[i]:
-                continue
-            left, right = self.array_index_to_bands(i)
-            yield Color(left, right, self.index[i], self.unc[i])
+        self[color.left, color.right] = color.index, color.unc
 
     def transform(
         self,
