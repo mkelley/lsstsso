@@ -61,6 +61,7 @@ global_substitutions: dict[str, str] = {
     "Unit": ":class:`~astropy.units.UnitBase`",
     "StructuredUnit": ":class:`~astropy.units.StructuredUnit`",
     # lsstsso
+    "Band": ":class:`~lsstsso.band.Band`",
     "Color": ":class:`~lsstsso.color.color.Color`",
     "ColorMatrix": ":class:`~lsstsso.color.color_matrix.ColorMatrix`",
 }

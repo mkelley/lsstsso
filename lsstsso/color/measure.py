@@ -12,7 +12,6 @@ def measure(
     m: u.Quantity[u.mag],
     unc: u.Quantity[u.mag],
     bands: np.ndarray[Band],
-    anchor: Band | str | None = None,
 ) -> ColorMatrix:
     """Calculate colors from observations.
 

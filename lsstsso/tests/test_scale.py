@@ -1,8 +1,7 @@
 import astropy.units as u
 import numpy as np
-import pytest
 
-from ..scale import activity, color, geometry
+from ..scale import activity, geometry
 
 
 def test_activity():
@@ -17,35 +16,6 @@ def test_activity():
 
     scale = activity(rh, delta, 0, -1)
     assert np.allclose(scale, 2.5 * np.log10(delta.value**1) * u.mag)
-
-
-def test_color():
-    m = [1, 2, 4] * u.mag
-    unc = [0.01, 0.02, 0.04] * u.mag
-    bands = ["u", "g", "r"]
-
-    scale, _ = color(m, unc, bands, "r")
-    assert u.allclose(scale, [3, 2, 0] * u.mag)
-
-
-@pytest.mark.xfail
-def test_color_uncertainties():
-    m = [1, 2, 4] * u.mag
-    unc = [0.01, 0.02, 0.04] * u.mag
-    bands = ["u", "g", "r"]
-
-    _, scale_unc = color(m, unc, bands, "r")
-
-    # these uncertainties are not right, u-g and g-r should be correlated
-    assert u.allclose(
-        scale_unc,
-        [
-            np.hypot(0.02, 0.04),
-            np.hypot(0.01, 0.02),
-            0,
-        ]
-        * u.mag,
-    )
 
 
 def test_geometry():

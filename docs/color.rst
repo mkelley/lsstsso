@@ -34,7 +34,7 @@ For convenience, |Color| may be initialized with strings and floats:
     >>> print(color)
     g-r = 0.550 ± 0.010 mag
 
-The bands are saved as the ``left`` and ``right`` attributes:
+The bands are saved as the ``left`` and ``right`` attributes, he value and uncertainty as ``index`` and ``unc``:
 
 .. code-block:: python
 
@@ -42,17 +42,12 @@ The bands are saved as the ``left`` and ``right`` attributes:
     <Band: g, 480.7 nm>
     >>> color.right
     <Band: r, 622.1 nm>
-
-The value and uncertainty are the ``index`` and ``unc`` attributes:
-
-.. code-block:: python
-
     >>> color.index
     <Quantity 0.55 mag>
     >>> color.unc
     <Quantity 0.01 mag>
 
-Colors and be calculated from an array of brightness measurements:
+Colors can be calculated from an array of brightness measurements with :func:`lsstsso.color.measure`, which returns a |ColorMatrix| object (see below):
 
 .. code-block:: python
 
@@ -62,18 +57,19 @@ Colors and be calculated from an array of brightness measurements:
     >>> unc = [0.01, 0.01, 0.01]
     >>> bands = ["u", "r", "g"]
     >>>
-    >>> print(measure(m, unc, bands))
-    [<Color u-g = 0.100 ± 0.014 mag>, <Color g-r = 0.400 ± 0.014 mag>]
+    >>> cm = measure(m, unc, bands)
+    >>> print(cm)
+    u-g = 0.100 ± 0.014 mag
+    u-r = 0.500 ± 0.014 mag
+    g-r = 0.400 ± 0.014 mag
 
-.. attention::
-
-    The colors calculated from more than three bands will have correlated uncertainties, but these are not yet calculated by :func:`~lsstsso.color.measure`.
+:func:`lsstsso.color.measure` returns every color that can be directly measured, even if they are not independent.  The correlation between colors is stored in the |ColorMatrix| object (see below).
 
 
 Multiple colors
 ===============
 
-The |ColorMatrix| class is used to hold multiple colors of an object.  The colors are stored in a 2D array:
+The |ColorMatrix| class is used to hold multiple colors of an object.  Internally the colors are stored as a flat array, but conceptually the colors form a 2D array:
 
 .. math::
 
@@ -99,42 +95,47 @@ First, create a |ColorMatrix| with multiple color measurements of the Sun from W
     ...     Color("r", "i", 0.12, 0.01),
     ...     Color("i", "y", 0.02, 0.01),
     ... ]
-    >>> cm = ColorMatrix(colors)
+    >>> cm = ColorMatrix.from_colors(colors)
     >>> cm
     <ColorMatrix: 5 values>
+    >>> print(cm)
+    u-g = 1.210 ± 0.010 mag
+    g-i = 0.540 ± 0.010 mag
+    g-z = 0.550 ± 0.010 mag
+    r-i = 0.120 ± 0.010 mag
+    i-y = 0.020 ± 0.010 mag
 
-The color matrix has 5 values, accessible from the ``index`` and ``unc`` attributes:
+Colors can also be accessed with a key-based look-up:
+
+.. code-block:: python
+
+    >>> print(cm["g", "z"])
+    g-z = 0.550 ± 0.010 mag
+
+The color matrix has 5 values of the 15 possible values, accessible from the 15-element ``index`` attribute:
 
 .. code-block:: python
 
     >>> print(cm.index)
-    [[-- 1.21 -- -- -- --]
-     [-1.21 -- -- 0.54 0.55 --]
-     [-- -- -- 0.12 -- --]
-     [-- -0.54 -0.12 -- -- 0.02]
-     [-- -0.55 -- -- -- --]
-     [-- -- -- -0.02 -- --]]
+    [1.21 -- -- -- -- -- 0.54 0.55 -- 0.12 -- -- -- 0.02 --]
+
+Note that ``index`` is a :class:`numpy.ma.MaskedArray`, with undefined values masked.
+
+Similarly, the ``cov`` attribute, a 15×15 element 2D array, stores the covariance matrix.  For convenience, the 1-σ uncertainties on each color can be accessed from the ``unc`` attribute.
+
+.. code-block:: python
+
     >>> print(cm.unc)
-    [[-- 0.01 -- -- -- --]
-     [0.01 -- -- 0.01 0.01 --]
-     [-- -- -- 0.01 -- --]
-     [-- 0.01 0.01 -- -- 0.01]
-     [-- 0.01 -- -- -- --]
-     [-- -- -- 0.01 -- --]]
+    [0.01 -- -- -- -- -- 0.01 0.01 -- 0.01 -- -- -- 0.01 --]
 
-The index is a NumPy :class:`~numpy.ma.MaskedArray`, and undefined values are masked.  Colors can be accessed from the array
+The mapping between index and color can be discovered with the :func:`~lsstsso.color.color_matrix.ColorMatrix.bands_to_array_index` and :func:`~lsstsso.color.color_matrix.ColorMatrix.array_index_to_bands` functions.
+
+For convenience, the covariance between two colors can be returned from :func:`~lsstsso.color.color_matrix.ColorMatrix.covariance`, but in this example the covariance was not defined, so the value is ``masked``:
 
 .. code-block:: python
 
-    >>> print(cm.index[0, 1])
-    1.21
-
-Or through the bracket notation, which returns a |Color| instance:
-
-.. code-block:: python
-
-    >>> cm["u", "g"]
-    <Color u-g = 1.210 ± 0.010 mag>
+    >>> cm.covariance(["u", "g"], ["g", "i"])
+    masked
 
 Finally, the |ColorMatrix| can be used as an iterable for the defined colors:
 
@@ -160,26 +161,11 @@ When |Color| objects contain an array of values, they may be weighted by their u
     >>> color.mean()
     <Color g-r = 0.549 ± 0.009 mag>
 
-Initializing a |ColorMatrix| from a list of colors will also average them together, if needed:
-
-.. code-block:: python
-
-    >>> colors = [
-    ...     Color("g", "r", [0.54, 0.58, 0.6], [0.01, 0.03, 0.03]),
-    ...     Color("r", "i", 0.21, 0.01),
-    ...     Color("r", "i", 0.26, 0.03),
-    ... ]
-    >>> cm = ColorMatrix(colors)
-    >>> cm["g", "r"]
-    <Color g-r = 0.549 ± 0.009 mag>
-    >>> cm["r", "i"]
-    <Color r-i = 0.215 ± 0.009 mag>
-
 
 Extrapolating colors
 ====================
 
-The following color set is missing :math:`g-r` and :math:`z-y` values, but they can be calculated from the other colors, e.g., :math:`g-r = u-r - u-g` and :math:`g-r = g-i + r-i`.  The missing colors can be solved for by :math:`\chi^2` minimization with :func:`lsstsso.color.solve`:
+The following color set is missing :math:`g-r` and :math:`z-y` values, but they can be calculated from the other colors, e.g., :math:`g-r = u-r - u-g` and :math:`g-r = g-i + r-i`.  Here, we solve for the missing colors with a :math:`\chi^2` minimization using :func:`lsstsso.color.solve`:
 
 .. code-block:: python
 
@@ -203,7 +189,7 @@ The following color set is missing :math:`g-r` and :math:`z-y` values, but they 
     >>> cm["z", "y"]
     <Color z-y = 0.010 ± 0.017 mag>
 
-The solved colors will generally have correlated uncertainties.  The covariance matrix and the colors for the columns and rows are also returned by ``solve``.
+The solved colors will generally have correlated uncertainties.
 
 Compare the variance on :math:`g-r` to the covariance between :math:`g-r` and :math:`g-i`:
 
@@ -217,6 +203,17 @@ Compare the variance on :math:`g-r` to the covariance between :math:`g-r` and :m
     >>> j = cov_colors.index(("g", "i"))
     >>> print(cov[i, j])  # pytest: +FLOAT_CMP
     9.999999999999999e-05
+
+
+Read and write |ColorMatrix| to a file
+======================================
+
+Color matrices may be written to and read from files.  They are written as ASCII tables with an ECSV format, which is able to save and restore data masks:
+
+.. code-block:: python
+
+    >>> cm.write("colors.ecsv")  # doctest: +SKIP
+    >>> new_cm = ColorMatrix.read("colors.ecsv")  # doctest: +SKIP
 
 
 Reference/API
