@@ -46,9 +46,9 @@ class Color:
         if np.size(self.index) > 1:
             s = str(self.mean())
             n = len(self.index)
-            return f"<Color {s} (mean of {n} points)>"
+            return f"<Color: {s} (mean of {n} points)>"
 
-        return f"<Color {self.left}-{self.right} = {self.index.value:0.3f} ± {self.unc.value:0.3f} mag>"
+        return f"<Color: {self.left}-{self.right} = {self.index.value:0.3f} ± {self.unc.value:0.3f} mag>"
 
     def __str__(self) -> str:
         return repr(self)[7:-1]

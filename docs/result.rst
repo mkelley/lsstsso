@@ -1,8 +1,11 @@
 .. _lsstsso_result:
 
-**************************************
-Inspecting results (`lsstsso.results`)
-**************************************
+*****************************************
+Inspecting results with `lsstsso.result`
+*****************************************
+
+.. currentmodule:: lsstsso.result
+
 
 Introduction
 ============
@@ -20,7 +23,7 @@ For example, get a list of Solar System objects in DP2 with cometary designation
     >>> comets
     <Result: ssObjectId,designation,nObs,arc,firstObservationMjdTai,tisserand_J,permid>
 
-Each column in the result table is available as an attribute.  For example, print out the SSObject IDs:
+Each column in the result table is available as an attribute.  For example, print out the SSObject IDs with the ``.ssObjectId`` attribute:
 
 .. doctest-remote-data::
 .. code-block:: python
@@ -47,7 +50,7 @@ Each column in the result table is available as an attribute.  For example, prin
 Show all columns
 ================
 
-Show all columns in the result:
+The attribute ``.columns`` contains a list of all the columns in the result:
 
 .. doctest-remote-data::
 .. code-block:: python
@@ -65,7 +68,7 @@ Show all columns in the result:
 Sorting
 =======
 
-Sort the result by a column:
+Sort the result by a column with :func:`~lsstsso.result.Result.sort`:
 
 .. doctest-remote-data::
 
@@ -82,7 +85,7 @@ Printing the result object will display a table:
 
     >>> print(comets)
          ssObjectId     designation  nObs     arc     firstObservationMjdTai tisserand_J permid
-                                               d                d                              
+                                               d                d
     ------------------- ------------ ---- ----------- ---------------------- ----------- ------
     5785771130468382804 P/2000 WT168   57     56.8895     60823.328466791805     2.71072   150P
     ...
@@ -97,8 +100,8 @@ Or, use :func:`~lsstsso.result.Result.as_table` to get the data as an astropy `~
     >>> tab
     <Table length=47>
          ssObjectId     designation   nObs     arc     firstObservationMjdTai tisserand_J permid
-                                                d                d                              
-           int64           str12     int32   float32          float64           float32    str4 
+                                                d                d
+           int64           str12     int32   float32          float64           float32    str4
     ------------------- ------------ ----- ----------- ---------------------- ----------- ------
     5785771130468382804 P/2000 WT168    57     56.8895     60823.328466791805     2.71072   150P
     ...

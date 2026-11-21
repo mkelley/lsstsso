@@ -1,15 +1,18 @@
 .. _lsstsso_band:
 
-************************************
-Handling filters with `lsstsso.band`
-************************************
+***************************************
+Handling bandpasses with `lsstsso.band`
+***************************************
+
+.. currentmodule:: lsstsso.band
+
 
 Introduction
 ============
 
-LSSTCam has 6 broadband filters: *u*, *g*, *r*, *i*, *z*, and *y*.  This list of filters is encapsulated into the :class:`~lsstsso.band.Band` class, offering a convenient reference for the filter set and associated data.  The class is derived from the Python `~enum.Enum`.
+LSSTCam has 6 broadband filters: *u*, *g*, *r*, *i*, *z*, and *y*.  This list of filters is encapsulated into the :class:`~lsstsso.band.Band` class, offering a convenient reference for the filter set and associated data.  The class is derived from the Python `~enum.StrEnum`.
 
-The bands themselves are attributes of ``Band``:
+The bands themselves are attributes of the :class:`~lsstsso.band.Band` object:
 
 .. code-block:: python
 
@@ -38,7 +41,7 @@ The list of LSSTCam filters may be inspected by passing the class to the `list` 
 
 Notice they are in wavelength order, which can be useful in some contexts.
 
-The ``Band`` object also be iterated over in a for-loop:
+The :class:`~lsstsso.band.Band` object also be iterated over in a for-loop:
 
 .. code-block:: python
 
@@ -93,7 +96,7 @@ The string name can be converted to a band object through initialization:
 As dictionary keys
 ==================
 
-``Band`` instances can be used as the key in a dictionary:
+:class:`~lsstsso.band.Band` instances can be used as the key in a dictionary:
 
 .. code-block:: python
 

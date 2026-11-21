@@ -36,6 +36,13 @@ intersphinx_mapping = {
 
 primary_domain = "py"
 
+# The master toctree document.
+master_doc = "index"
+
+# The reST default role (used for this markup: `text`) to use for all
+# documents. Set to the "smart" one.
+default_role = "obj"
+
 # -- Options for HTML output -------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#options-for-html-output
 
