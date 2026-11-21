@@ -211,7 +211,7 @@ The following color set is missing :math:`g-r` and :math:`z-y` values, but they 
 
 .. code-block:: python
 
-    >>> from lsstsso.color import solve
+    >>> from lsstsso.color import Color, ColorMatrix, solve
     >>>
     >>> colors = [
     ...     Color("u", "g", 1.21, 0.01),
@@ -241,6 +241,30 @@ Compare the variance on :math:`g-r` to the covariance between :math:`g-r` and :m
     0.0002
     >>> print(cm.covariance(("g", "r"), ("g", "i")))  # pytest: +FLOAT_CMP
     0.0001
+
+
+Transforming between bandpasses
+===============================
+
+With a |ColorMatrix| one can convert observations to other bandpasses using :func:`~lsstsso.color.transform`:
+
+.. code-block:: python
+
+    >>> import astropy.units as u
+    >>> from lsstsso.color import Color, ColorMatrix, transform
+    >>>
+    >>> m = [18.20, 17.0, 16.58] * u.mag
+    >>> unc = [0.1, 0.03, 0.02] * u.mag
+    >>> bands = ["u", "g", "r"]
+    >>>
+    >>> colors = [
+    ...     Color("u", "r", 1.62, 0.01),
+    ...     Color("g", "r", 0.42, 0.01),
+    ... ]
+    >>> cm = ColorMatrix.from_colors(colors)
+    >>> m2, unc2 = cm.transform(m, unc, bands, "r")
+    >>> print(m2)
+    [16.58 16.58 16.58] mag
 
 
 Read and write |ColorMatrix| to a file

@@ -51,7 +51,7 @@ class Color:
         return f"<Color: {self.left}-{self.right} = {self.index.value:0.3f} ± {self.unc.value:0.3f} mag>"
 
     def __str__(self) -> str:
-        return repr(self)[7:-1]
+        return repr(self)[8:-1]
 
     def __eq__(self, other) -> bool:
         """Compares bands and values (via `astropy.units.isclose`)."""

@@ -12,6 +12,8 @@ Finding nearest neighbors
 
 Catalog query results can be searched for nearest-neighbors with :func:`~lsstsso.filters.sky`:
 
+
+.. doctest-remote-data::
 .. code-block:: python
 
     >>> import astropy.units as u
@@ -45,6 +47,7 @@ Finding nearest neighbors in space and time
 
 Catalog results can also be searched for observations within a time tolerance (default is 15 s) using :func:`~lsstsso.filters.sky_and_time`:
 
+.. doctest-remote-data::
 .. code-block:: python
 
     >>> from astropy.time import Time
