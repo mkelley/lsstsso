@@ -8,9 +8,10 @@ Features:
 * Query caching.
 * Convenience functions for common queries.
 * Result objects designed for column-based and row-based inspection.
-* Powered by [astropy](https://astropy.org/)!
+* Calculate colors with correlated uncertainties.
+* Powered by [astropy](https://astropy.org/) and [sbpy](https://sbpy.org/)!
 
-The API is not currently stable.
+The API is advanced but not currently stable.
 
 The convenience queries are currently hard-coded for DP2.
 
@@ -63,13 +64,12 @@ Calculate *g*–*r* color from *u*–*g*, *u*–*i*, and *r*–*i* measurements:
 ```python
 >>> from lsstsso.color import Color, ColorMatrix, solve
 >>>
->>> colors = [
+>>> cm = ColorMatrix.from_colors([
 ...     Color("u", "g", 1.3, 0.01),
 ...     Color("u", "i", 1.8, 0.01),
 ...     Color("r", "i", 0.2, 0.01),
-... ]
->>> color_matrix0 = ColorMatrix.from_colors(colors)
->>> color_matrix = solve(color_matrix0)
->>> color_matrix["g", "r"]
-<Color g-r = 0.300 ± 0.017 mag>
+... ])
+>>> result = solve(cm)
+>>> result["g", "r"]
+g-r = 0.300 ± 0.017 mag
 ```
