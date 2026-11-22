@@ -90,7 +90,7 @@ def solve(cm: ColorMatrix) -> ColorMatrix:
     X = A.T @ Cinv_A  # A^T @ C^-1 @ A
     Y = Cinv_A.T @ b  # A^T @ C^-1 @ y
 
-    # now, solve the GLS equation (avoiding using np.linalg.inv directly)
+    # now, solve the GLS equation (avoid using np.linalg.inv)
     x_hat = np.linalg.solve(X, Y)
     cov_x_hat = np.linalg.solve(X, np.identity(X.shape[0]))
 
