@@ -8,7 +8,7 @@ from scipy.special import factorial
 from .color_matrix import ColorMatrix
 
 
-def solve(cm: ColorMatrix) -> ColorMatrix:
+def solve(*color_matrices: list[ColorMatrix]) -> ColorMatrix:
     """Solve for a new color solution with a least-squares approach.
 
     The colors will be adjusted and all possible band combinations calculated to
@@ -19,8 +19,8 @@ def solve(cm: ColorMatrix) -> ColorMatrix:
 
     Parameters
     ----------
-    cm : ColorMatrix
-        The input colors.
+    color_matrices : array of ColorMatrix
+        The input colors.  Multiple color matrices may be given.
 
 
     Returns
@@ -32,7 +32,7 @@ def solve(cm: ColorMatrix) -> ColorMatrix:
     Examples
     --------
 
-    From an observation of :math:`u-g` and :math:`u-r`, calculate :math:`g-r`:
+    From an observation of `u-g` and `u-r`, calculate `g-r`:
 
     >>> from lsstsso.color import Color, solve
     >>>
@@ -57,29 +57,35 @@ def solve(cm: ColorMatrix) -> ColorMatrix:
     # How many bands are given?  For the method below, we need to limit
     # calculations to the observed bands.
     bands = set()
-    for color in cm:
-        bands |= {color.left, color.right}
+    for cm in color_matrices:
+        for color in cm:
+            bands |= {color.left, color.right}
 
     bands = sorted(bands)
     n_bands = len(bands)
-    n_obs = len(cm)
+    n_obs = sum([len(cm) for cm in color_matrices])
     n_colors = int(factorial(n_bands) / (2 * factorial(n_bands - 2)))
 
-    # A maps colors to observations, b is the observation vector, C is the
-    # covariance matrix
+    # A maps colors to observations (A[obs, color]), b is the observation
+    # vector, C is the covariance matrix
     A = np.zeros((n_obs, n_bands - 1))
-    ii = []  # track the ColorMatrix indices needed
-    for i, color in enumerate(cm):
-        j = bands.index(color.left)
-        k = bands.index(color.right)
+    b = np.zeros(n_obs)
+    C = np.zeros((n_obs, n_obs))
+    obs = 0  # track the observation index
+    for cm in color_matrices:
+        ii = []  # track the ColorMatrix indices
+        for i, color in enumerate(cm):
+            j = bands.index(color.left)
+            k = bands.index(color.right)
 
-        # this color is the sum of all colors from j to k, i.e., u-r = u-g + g-r
-        A[i, j:k] = 1
+            # this color is the sum of all colors from j to k, i.e., u-r = u-g + g-r
+            A[obs + i, j:k] = 1
 
-        ii.append(cm.bands_to_array_index(color.left, color.right))
+            ii.append(cm.bands_to_array_index(color.left, color.right))
 
-    b = cm.index[ii]
-    C = cm.cov[ii][:, ii].filled(0)
+        b[obs : obs + len(ii)] = cm.index[ii]
+        C[obs : obs + len(ii), obs : obs + len(ii)] = cm.cov[ii][:, ii].filled(0)
+        obs += len(cm)
 
     # solve generalized least squares (A^T @ C^-1 @ A) x = A^T @ C^-1 @ y, where
     # C is the covariance matrix, x is the solution and y are the observations

@@ -203,9 +203,35 @@ But take care, as now the measurements are correlated:
     >>> print(cm.covariance(["u", "g"], ["g", "r"]))
     -0.00038095238095238096
 
+:func:`lsstsso.color.solve` can also combine multiple color matrices:
 
-Calculating colors
-==================
+.. code-block:: python
+
+    >>> cm1 = ColorMatrix.from_colors(
+    ...     [
+    ...         Color("u", "g", 1.21, 0.01),
+    ...         Color("u", "r", 1.63, 0.01),
+    ...         Color("g", "r", 0.42, 0.01),
+    ...     ]
+    ... )
+    >>>
+    >>> cm2 = ColorMatrix.from_colors(
+    ...     [
+    ...         Color("u", "g", 1.20, 0.01),
+    ...         Color("u", "r", 1.61, 0.01),
+    ...         Color("g", "r", 0.41, 0.01),
+    ...     ]
+    ... )
+    >>>
+    >>> result = solve(cm1, cm2)
+    >>> print(result)
+    u-g = 1.205 ± 0.006 mag
+    u-r = 1.620 ± 0.006 mag
+    g-r = 0.415 ± 0.006 mag
+
+
+Calculating new colors
+======================
 
 The following color set is missing :math:`g-r` and :math:`z-y` values, but they can be calculated from the other colors, e.g., :math:`g-r = u-r - u-g` and :math:`g-r = g-i + r-i`.  Here, we solve for the missing colors with :func:`lsstsso.color.solve`:
 

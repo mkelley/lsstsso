@@ -132,21 +132,6 @@ class ColorMatrix:
 
         return cm
 
-    @classmethod
-    def average(*color_matrices: tuple["ColorMatrix"]) -> "ColorMatrix":
-        """Average a list of |ColorMatrix| together.
-
-        Parameters
-        ----------
-        color_matrices : array of ColorMatrix
-            The color matrices to average.
-
-        Returns
-        -------
-        cm : ColorMatrix
-
-        """
-
     @property
     def unc(self) -> MaskedArray:
         return np.sqrt(np.ma.diag(self.cov))

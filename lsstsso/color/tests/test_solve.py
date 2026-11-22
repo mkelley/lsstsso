@@ -144,12 +144,53 @@ def test_closed_set():
     cm = ColorMatrix.from_colors(colors)
     result = solve(cm)
 
+    # check values
     assert np.isclose(result.index[0], 1.21)  # u-g
     assert np.isclose(result.index[1], 1.63)  # u-r
     assert np.isclose(result.index[5], 0.42)  # g-r
 
     # check variances
     var = (1 / 0.01**2 + 1 / (2 * 0.01**2)) ** -1
+    assert np.isclose(result.cov[0, 0], var)  # var(u-g)
+    assert np.isclose(result.cov[1, 1], var)  # var(u-r)
+    assert np.isclose(result.cov[5, 5], var)  # var(g-r)
+
+    # check covariances
+    cov = 1 / (1 / var + 1 / var)
+    assert np.isclose(result.cov[0, 1], cov)  # cov(u-g, u-r)
+    assert np.isclose(result.cov[0, 5], -cov)  # cov(u-g, g-r)
+    assert np.isclose(result.cov[1, 5], cov)  # cov(u-r, g-r)
+
+
+def test_multiple():
+    """Combine multiple color matrices."""
+
+    cm1 = ColorMatrix.from_colors(
+        [
+            Color("u", "g", 1.21, 0.01),
+            Color("u", "r", 1.63, 0.01),
+            Color("g", "r", 0.42, 0.01),
+        ]
+    )
+
+    cm2 = ColorMatrix.from_colors(
+        [
+            Color("u", "g", 1.20, 0.01),
+            Color("u", "r", 1.61, 0.01),
+            Color("g", "r", 0.41, 0.01),
+        ]
+    )
+
+    result = solve(cm1, cm2)
+
+    # check values, should be the average of the above
+    assert np.isclose(result.index[0], 1.205)  # u-g
+    assert np.isclose(result.index[1], 1.620)  # u-r
+    assert np.isclose(result.index[5], 0.415)  # g-r
+
+    # check variances
+    var1 = (1 / 0.01**2 + 1 / (2 * 0.01**2)) ** -1
+    var = 1 / (1 / var1 + 1 / var1)
     assert np.isclose(result.cov[0, 0], var)  # var(u-g)
     assert np.isclose(result.cov[1, 1], var)  # var(u-r)
     assert np.isclose(result.cov[5, 5], var)  # var(g-r)
