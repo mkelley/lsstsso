@@ -43,7 +43,7 @@ class Result:
             elif col in ("peri_time", "epoch_mjd") and not isinstance(table[col], Time):
                 data = Time(table[col], scale="tt", format="mjd")
             elif col == "band" and not isinstance(table[col], Band):
-                data = np.array([Band[b] for b in table[col]])
+                data = np.array(table[col], dtype=Band)
             elif hasattr(table[col], "unit") and table[col].unit is not None:
                 data = table[col].quantity
             elif isinstance(table[col], Column):
@@ -168,7 +168,7 @@ class Result:
         for i in range(len(self)):
             yield self[i]
 
-    def sort(self, field: str, reversed: bool = True):
+    def sort(self, field: str, reversed: bool = False):
         """In-place sort by the requested column ."""
 
         i = np.argsort(self[field])

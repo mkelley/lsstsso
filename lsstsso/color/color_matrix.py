@@ -41,8 +41,8 @@ class ColorMatrix:
         following order: u-g, u-r, u-i, u-z, u-y, g-r, g-i, etc.
 
     unc : array, optional
-        A length-15 array of the uncertainties on each element of ``colors`` or
-        a 15x15 element covariance matrix.
+        A length-15 array of the 1-sigma uncertainties on each element of
+        ``colors`` or a 15x15 element covariance matrix.
 
 
     Examples
@@ -92,15 +92,16 @@ class ColorMatrix:
 
     def __init__(self, index: np.ndarray | None = None, unc: np.ndarray | None = None):
         if index is None:
-            self.index = MaskedArray(np.zeros(15), mask=np.ones(15, bool))
-        elif np.shape(index) != (15,):
-            raise ValueError("index must have length 15")
-        else:
-            self.index = MaskedArray(index)
-
+            index = MaskedArray(np.zeros(15), mask=np.ones(15, bool))
         if unc is None:
-            self.cov = MaskedArray(np.zeros((15, 15)), mask=np.ones((15, 15), bool))
-        elif np.shape(unc) == (15,):
+            unc = MaskedArray(np.zeros((15, 15)), mask=np.ones((15, 15), bool))
+
+        if np.shape(index) != (15,):
+            raise ValueError("index must have length 15")
+
+        self.index = MaskedArray(index)
+
+        if np.shape(unc) == (15,):
             self.cov = np.ma.diag(unc**2)
         elif np.shape(unc) == (15, 15):
             self.cov = MaskedArray(unc)
@@ -216,6 +217,10 @@ class ColorMatrix:
         """
 
         a, b = [Band(b) for b in bands]
+        value = [
+            x if x is np.ma.masked else u.Quantity(x, u.mag).to_value("mag")
+            for x in value
+        ]
 
         scale = 1
         if a > b:
@@ -223,8 +228,8 @@ class ColorMatrix:
             scale = -1
 
         i = self.bands_to_array_index(a, b)
-        self.index[i] = scale * value[0].to_value("mag")
-        self.cov[i, i] = value[1].to_value("mag") ** 2
+        self.index[i] = scale * value[0]
+        self.cov[i, i] = value[1] ** 2
 
     @staticmethod
     def bands_to_array_index(blue: Band | str, red: Band | str) -> int:

@@ -68,7 +68,7 @@ The attribute ``.columns`` contains a list of all the columns in the result:
 Sorting
 =======
 
-Sort the result by a column with :func:`~lsstsso.result.Result.sort`:
+Sort the result by a column with :func:`~lsstsso.result.Result.sort`.  The object is sorted in-place:
 
 .. doctest-remote-data::
 

@@ -1,5 +1,6 @@
 import astropy.units as u
 import numpy as np
+import pytest
 
 from ...band import Band
 from ..color import Color
@@ -7,18 +8,42 @@ from ..color_matrix import ColorMatrix
 
 
 def test_init():
-    colors = np.ma.arange(15)
-    colors.mask = False
+    # test empty arrays
+    cm = ColorMatrix()
+    assert np.all(cm.index.mask)
+    assert np.all(cm.cov.mask)
+
+    index = np.ma.arange(15)
+    index.mask = False
     cov = np.ma.arange(15 * 15).reshape((15, 15))
     cov.mask = False
 
-    colors.mask[10] = True
+    index.mask[10] = True
     cov.mask[:, 10] = True
     cov.mask[10, :] = True
 
-    cm = ColorMatrix(colors, cov)
-    assert np.ma.allclose(cm.index, colors)
+    cm = ColorMatrix(index, cov)
+    assert np.ma.allclose(cm.index, index)
     assert np.ma.allclose(cm.cov, cov)
+
+    # initialize with 1-sigma uncertainties
+    cm = ColorMatrix(index, 0.1 * np.ones(15))
+    assert np.ma.allclose(cm.unc, 0.1)
+
+
+def test_init_fail():
+    index = np.zeros(14)
+    with pytest.raises(ValueError):
+        ColorMatrix(index)
+
+    index = np.zeros(15)
+    cov = np.zeros((14, 14))
+    with pytest.raises(ValueError):
+        ColorMatrix(index, cov)
+
+    unc = np.zeros(14)
+    with pytest.raises(ValueError):
+        ColorMatrix(index, unc)
 
 
 def test_from_colors():
@@ -94,6 +119,30 @@ def test_getitem():
     assert cm["u", "r"] is None
 
     assert cm["u", "u"] == Color("u", "u", 0, 0)
+
+
+def test_set():
+    cm = ColorMatrix()
+
+    cm["u", "g"] = 1 * u.mag, 0.1 * u.mag
+    assert u.isclose(cm.index[0], 1)
+    assert u.isclose(cm.unc[0], 0.1)
+
+    cm["u", "r"] = 2, 0.2
+    assert u.isclose(cm.index[1], 2)
+    assert u.isclose(cm.unc[1], 0.2)
+
+    cm.set(Color("g", "r", 1, 0.3))
+    assert u.isclose(cm.index[5], 1)
+    assert u.isclose(cm.unc[5], 0.3)
+
+    cm.set(Color("i", "r", -1, 0.4))
+    assert u.isclose(cm.index[9], 1)
+    assert u.isclose(cm.unc[9], 0.4)
+
+    cm["u", "r"] = np.ma.masked, np.ma.masked
+    assert cm.index.mask[1]
+    assert cm.unc.mask[1]
 
 
 def test_iter():
