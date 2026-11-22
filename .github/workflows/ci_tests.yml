@@ -1,0 +1,58 @@
+# GitHub Actions workflow for testing and continuous integration.
+#
+# This file performs testing using tox and tox.ini to define and configure the test environments.
+
+name: CI Tests
+
+on:
+  push:
+    branches:
+      - main
+    tags:
+      - "*"
+  pull_request:
+    # branches: # only build on PRs against 'main' if you need to further limit when CI is run.
+    #    - main
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  ARCH_ON_CI: "normal"
+  IS_CRON: "false"
+
+jobs:
+  tests:
+    uses: OpenAstronomy/github-actions-workflows/.github/workflows/tox.yml@v3
+    secrets:
+      CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+    with:
+      submodules: false
+      coverage: ""
+      envs: |
+        - name: Code style checks
+          linux: codestyle
+
+        - name: Python 3.14 with minimal dependencies, measuring coverage
+          linux: py314-test-cov
+          coverage: codecov
+
+        - name: Python 3.10 with oldest supported versions
+          linux: py312-test-oldestdeps
+  macos-test:
+    name: Python 3.14 (MacOS)
+    runs-on: macos-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: 3.14
+      - name: Install tox
+        run: |
+          pip install tox
+      - name: Run tests
+        run: |
+          tox -e py314-test
