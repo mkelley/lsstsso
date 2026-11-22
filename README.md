@@ -15,7 +15,7 @@ The API is advanced but not currently stable.
 
 The convenience queries are currently hard-coded for DP2.
 
-[![codecov](https://codecov.io/gh/mkelley/lsstsso/graph/badge.svg?token=43YF0G7O3K)](https://codecov.io/gh/mkelley/lsstsso)
+[![codecov](https://codecov.io/gh/mkelley/lsstsso/graph/badge.svg?token=43YF0G7O3K)](https://codecov.io/gh/mkelley/lsstsso) [![documentation](https://lsstsso.readthedocs.io/en/latest/)](https://app.readthedocs.org/projects/lsstsso/badge/?version=latest&style=flat)
 
 ## Installation and setup
 
