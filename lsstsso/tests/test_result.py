@@ -44,6 +44,18 @@ def test_init():
     assert u.allclose(result.dec, [4, 5, 6] * u.deg)
 
 
+def test_repr():
+    tab = Table([{"a": 1, "b": 2}])
+    result = Result(tab)
+    assert repr(result) == "<Result: a,b>"
+
+
+def test_str():
+    tab = Table([{"a": 1, "b": 2}])
+    result = Result(tab)
+    assert str(result) == "\n".join(tab.pformat())
+
+
 def test_from_arrays():
     result = Result.from_arrays(ra=[1, 2, 3] * u.deg, dec=[3, 4, 5] * u.deg)
     assert len(result) == 3
@@ -127,3 +139,21 @@ def test_rows():
     for row, ra, band in zip(result.rows(), [1, 2, 3] * u.deg, "gry"):
         assert u.isclose(row.ra, ra)
         assert row.band == band
+
+
+def test_sort():
+    result = Result.from_arrays(
+        ra=[3, 2, 1] * u.deg, band=np.array([Band.r, Band.g, Band.y])
+    )
+
+    result.sort("band")
+    assert u.allclose(result.ra, [2, 3, 1] * u.deg)
+    assert all(result.band == ["g", "r", "y"])
+
+    result.sort("ra")
+    assert u.allclose(result.ra, [1, 2, 3] * u.deg)
+    assert all(result.band == ["y", "g", "r"])
+
+    result.sort("ra", reversed=True)
+    assert u.allclose(result.ra, [3, 2, 1] * u.deg)
+    assert all(result.band == ["r", "g", "y"])

@@ -10,7 +10,7 @@ Features:
 * Query caching.
 * Convenience functions for common queries.
 * Result objects designed for column-based and row-based inspection.
-* Powered by [astropy](https://astropy.org/)!
+* Powered by `astropy <https://astropy.org/>`_ and `sbpy <https://sbpy.org/>`_!
 
 .. attention::
 

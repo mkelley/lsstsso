@@ -12,9 +12,9 @@ if typing.TYPE_CHECKING:
 def transform(
     m: u.Quantity,
     unc: u.Quantity,
-    from_band: Band | str,
+    from_band: Band | str | list[Band | str],
     to_band: Band | str,
-    color_matrix: "ColorMatrix",
+    cm: "ColorMatrix",
 ) -> tuple[u.Quantity, u.Quantity]:
     """Transform a band to another.
 
@@ -22,46 +22,53 @@ def transform(
     Parameters
     ----------
     m : u.Quantity
-        The observation to transform in units of magnitudes.
+        The observation(s) to transform in units of magnitudes.
 
     unc : u.Quantity
         The uncertainty on ``m``.
 
-    from_band : Band or str
-        The band in which ``m`` is measured.
+    from_band : Band or str or array thereof
+        The band(s) in which ``m`` is measured.
 
     to_band : Band or str
         The band to transform to.
 
-    color_matrix : ColorMatrix
+    cm : ColorMatrix
         The color transformation matrix.
 
 
     Results
     -------
-    m_t : u.Quantity
-        The transformed measurement.
+    m_t : u.Quantity or "MaskedQuantity"
+        The transformed measurement(s).  Masks will be used for values that
+        cannot be calculated with ``cm``.
 
     unc_t : u.Quantity
         The uncertainty on ``m_t``.
 
-
-    Raises
-    ------
-    ValueError
-        If the transformation between these bands is not possible with
-        ``color_matrix``.
-
     """
 
-    if from_band == to_band:
-        return m, unc
+    n = np.size(m)
+    _m = u.Quantity(m, u.mag).reshape((n,))
+    _unc = u.Quantity(unc, u.mag).reshape((n,))
 
-    color = color_matrix[from_band, to_band]
-    if color is np.ma.masked:
-        raise ValueError(f"Missing color transformation for {from_band} to {to_band}.")
+    m_t = np.ma.zeros_like(_m)
+    m_t.mask = True
+    unc_t = np.ma.zeros_like(_m)
+    unc_t.mask = True
 
-    m_t = u.Quantity(m, u.mag) - color.index
-    unc_t = np.hypot(u.Quantity(unc, u.mag), color.unc)
+    bands = np.array(from_band).reshape((np.size(from_band),))
+    for band in set(bands):
+        color = cm[band, to_band]
+        if color is None:
+            continue
 
-    return m_t, unc_t
+        i = bands == band
+        m_t[i] = _m[i] - color.index
+        unc_t[i] = np.hypot(_unc[i], color.unc)
+
+    if not any(m_t.mask):
+        m_t = m_t.data
+        unc_t = unc_t.data
+
+    return m_t.reshape(m.shape), unc_t.reshape(m.shape)

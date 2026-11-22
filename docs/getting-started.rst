@@ -46,7 +46,7 @@ First, get a list of comets:
     >>> comets = get.comets()
     >>> print(comets)
          ssObjectId     designation  nObs     arc     firstObservationMjdTai tisserand_J permid
-                                               d                d                              
+                                               d                d
     ------------------- ------------ ---- ----------- ---------------------- ----------- ------
     5785498485624156464    P/1988 D1   11     22.9181     60847.158599118426     2.98857   110P
     ...
@@ -79,7 +79,8 @@ Take a u-g and a g-r color, solve for the u-r color, and transform a u-band magn
     ...     Color("u", "g", 1.8 * u.mag, 0.01 * u.mag),
     ...     Color("g", "r", 0.5 * u.mag, 0.01 * u.mag),
     ... ]
-    >>> cm, _, _ = solve(colors)
+    >>> cm0 = ColorMatrix.from_colors(colors)
+    >>> cm = solve(cm0)
     >>> print(cm.transform(20.0 * u.mag, 0.02 * u.mag, "u", "r"))
     (<Quantity 17.7 mag>, <Quantity 0.0244949 mag>)
 
@@ -99,7 +100,7 @@ For example, use `lsstsso.get.ssobject` to fetch the SSObject IDs for objects wi
     ...     columns=["ssObjectId"]
     ... )
     >>> print(comets)
-         ssObjectId    
+         ssObjectId
     -------------------
     5785772247091262512
     5785772259674174000

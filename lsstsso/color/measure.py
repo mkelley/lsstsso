@@ -1,19 +1,18 @@
-from itertools import pairwise
+from itertools import combinations
 
 import astropy.units as u
 import numpy as np
 
 from ..band import Band
 from ..util import weighted_mean
-from .color import Color
+from .color_matrix import ColorMatrix
 
 
 def measure(
     m: u.Quantity[u.mag],
     unc: u.Quantity[u.mag],
     bands: np.ndarray[Band],
-    anchor: Band | str | None = None,
-) -> list[Color]:
+) -> ColorMatrix:
     """Calculate colors from observations.
 
 
@@ -28,9 +27,6 @@ def measure(
     bands : array of Band
         The observational bands for each ``m``.
 
-    anchor : Band or str, optional
-        Measure with respect to this band.
-
 
     Returns
     -------
@@ -39,36 +35,40 @@ def measure(
 
     """
 
-    m = u.Quantity(m, u.mag)
-    unc = u.Quantity(unc, u.mag)
+    m = u.Quantity(m, u.mag).to_value("mag")
+    unc = u.Quantity(unc, u.mag).to_value("mag")
+    bands = np.array(bands)
 
     # averaged apparent magnitude
-    avg = {}
-    avg_unc = {}
-    for band in set(bands):
+    avg, avg_unc = np.ma.zeros((2, 6))
+    avg.mask = [True] * 6
+    avg_unc.mask = [True] * 6
+    for i, band in enumerate(Band):
         # find all observations in this band
-        i = np.array(bands) == band
+        j = bands == band
+
+        if not any(j):
+            continue
 
         # average them together
-        avg[band], avg_unc[band] = weighted_mean(m[i], unc[i])
+        avg[i], avg_unc[i] = weighted_mean(m[j], unc[j])
 
-    # setup color pairs
-    if anchor is None:
-        pairs = pairwise(sorted({Band(b) for b in bands}))
-    else:
-        anchor = Band(anchor)
-        pairs = [(band, anchor) for band in bands if band != anchor]
+    # color equations: u-g, u-r, etc
+    A = np.zeros((15, 6), int)
+    for i, (j, k) in enumerate(combinations(range(6), 2)):
+        A[i, j] = 1
+        A[i, k] = -1
 
-    # calculate colors
-    colors = []
-    for left, right in pairs:
-        colors.append(
-            Color(
-                left,
-                right,
-                avg[left] - avg[right],
-                np.hypot(avg_unc[left], avg_unc[right]),
-            )
-        )
+    # calculate
+    color_mask = ((A != 0) @ avg.mask) != 0
+    colors = np.ma.MaskedArray(A @ avg.filled(1), mask=color_mask)
 
-    return colors
+    cov_mask = np.zeros((15, 15), bool)
+    cov_mask[color_mask] = True
+    cov_mask[:, color_mask] = True
+    cov = np.ma.MaskedArray(
+        A @ np.diag(avg_unc.filled(1) ** 2) @ A.T,
+        mask=cov_mask,
+    )
+
+    return ColorMatrix(colors, cov)

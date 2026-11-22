@@ -4,6 +4,8 @@
 Scaling observations with `lsstsso.scale`
 *****************************************
 
+.. currentmodule:: lsstsso.scale
+
 
 Introduction
 ============
@@ -18,7 +20,7 @@ Scale by geometry
 Reduced magnitude
 -----------------
 
-With :func:`lsstsso.scale.geometry`, one can correct for observational geometry.  The default is to calculate scale factors for reduced magnitude, :math:`H(1, 1, α)`, i.e., :math:`1/r^2` scaling to correct to a heliocentric distance of 1 au and a observer-target distance of 1 au, leaving the phase effect uncorrected:
+With :func:`~lsstsso.scale.geometry`, one can correct for observational geometry.  The default is to calculate scale factors for reduced magnitude, :math:`H(1, 1, α)`, i.e., :math:`1/r^2` scaling to correct to a heliocentric distance of 1 au and a observer-target distance of 1 au, leaving the phase effect uncorrected:
 
 .. code-block:: python
 
@@ -27,7 +29,7 @@ With :func:`lsstsso.scale.geometry`, one can correct for observational geometry.
     >>>
     >>> rh = [1, 2, 4] * u.au
     >>> delta = [1, 2, 3] * u.au
-    >>> 
+    >>>
     >>> s = scale.geometry(rh, delta)
     >>> print(s)  # pytest: +FLOAT_CMP
     [0.         3.01029996 5.39590623] mag
@@ -55,7 +57,7 @@ To account for phase effect and get scale factors for absolute magnitude, :math:
     >>> delta = [1, 2, 3] * u.au
     >>> phase = [0, 10, 20] * u.deg
     >>> Phi = lambda phase: 10**(-0.4 * HG(0, 0.12)(phase))
-    >>> 
+    >>>
     >>> print(scale.geometry(rh, delta, phase, Phi=Phi))  # pytest: +FLOAT_CMP
     [0.         3.69335624 6.43548318] mag
 
@@ -102,30 +104,3 @@ Assuming photometry of a cometary coma measured within fixed angular apertures, 
     >>>
     >>> print(scale.activity(rh, delta, activity_slope, delta_slope))
     [0.         3.76287495 7.21340305] mag
-
-
-Color scaling
-=============
-
-From a collection of photometry, calculate the scale factors to transform the observations into a common bandpass.
-
-Calculate the scale factors to transform u- and g-band photometry to r-band photometry:
-
-.. code-block:: python
-
-    >>> import astropy.units as u
-    >>> from lsstsso import scale
-    >>>
-    >>> m = [1, 2, 4] * u.mag
-    >>> unc = [0.01, 0.01, 0.01] * u.mag
-    >>> bands = ["r", "g", "u"]
-    >>>
-    >>> s, s_unc = scale.color(m, unc, bands, "r")
-    >>> print(s)
-    [ 0. -1. -3.] mag
-    >>> print(s_unc)
-    [0.         0.01414214 0.02      ] mag
-
-.. attention::
-
-    :func:`lsstsso.scale.color` does not yet account for correlations between color measurements.

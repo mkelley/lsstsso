@@ -36,6 +36,13 @@ intersphinx_mapping = {
 
 primary_domain = "py"
 
+# The master toctree document.
+master_doc = "index"
+
+# The reST default role (used for this markup: `text`) to use for all
+# documents. Set to the "smart" one.
+default_role = "obj"
+
 # -- Options for HTML output -------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#options-for-html-output
 
@@ -61,6 +68,7 @@ global_substitutions: dict[str, str] = {
     "Unit": ":class:`~astropy.units.UnitBase`",
     "StructuredUnit": ":class:`~astropy.units.StructuredUnit`",
     # lsstsso
+    "Band": ":class:`~lsstsso.band.Band`",
     "Color": ":class:`~lsstsso.color.color.Color`",
     "ColorMatrix": ":class:`~lsstsso.color.color_matrix.ColorMatrix`",
 }

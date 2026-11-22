@@ -37,8 +37,8 @@ Get a list of comets in DP2:
 >>> comets
 <Table length=47>
      ssObjectId     designation   nObs     arc     firstObservationMjdTai tisserand_J permid
-                                            d                                               
-       int64           str12     int32   float32            Time            float32    str4 
+                                            d
+       int64           str12     int32   float32            Time            float32    str4
 ------------------- ------------ ----- ----------- ---------------------- ----------- ------
 5785498485624156464    P/1988 D1    11     22.9181     60847.158599118426     2.98857   110P
 ...
@@ -61,14 +61,15 @@ Get the lightcurve of an object.  The result is based on a join with the DiaSour
 Calculate *g*–*r* color from *u*–*g*, *u*–*i*, and *r*–*i* measurements:
 
 ```python
->>> from lsstsso.color import Color, solve
+>>> from lsstsso.color import Color, ColorMatrix, solve
 >>>
 >>> colors = [
 ...     Color("u", "g", 1.3, 0.01),
 ...     Color("u", "i", 1.8, 0.01),
 ...     Color("r", "i", 0.2, 0.01),
 ... ]
->>> color_matrix, _, _ = solve(colors)
+>>> color_matrix0 = ColorMatrix.from_colors(colors)
+>>> color_matrix = solve(color_matrix0)
 >>> color_matrix["g", "r"]
-g-r = 0.300 ± 0.017 mag
+<Color g-r = 0.300 ± 0.017 mag>
 ```
