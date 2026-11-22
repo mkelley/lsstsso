@@ -30,4 +30,3 @@ User Guide
    :maxdepth: 1
 
    scale
-

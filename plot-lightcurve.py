@@ -2,11 +2,12 @@ import argparse
 
 import astropy.constants as const
 import astropy.units as u
-import lsstsso
 import matplotlib.pyplot as plt
 import numpy as np
-from lsstsso import Band, scale
 from numpy import pi
+
+import lsstsso
+from lsstsso import Band, scale
 
 parser = argparse.ArgumentParser()
 parser.add_argument("ssobjectid")
