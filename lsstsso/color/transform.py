@@ -39,11 +39,11 @@ def transform(
 
     Results
     -------
-    m_t : u.Quantity or "MaskedQuantity"
+    m_t : MaskedQuantity
         The transformed measurement(s).  Masks will be used for values that
         cannot be calculated with ``cm``.
 
-    unc_t : u.Quantity
+    unc_t : MaskedQuantity
         The uncertainty on ``m_t``.
 
     """
@@ -52,12 +52,17 @@ def transform(
     _m = u.Quantity(m, u.mag).reshape((n,))
     _unc = u.Quantity(unc, u.mag).reshape((n,))
 
+    if np.size(from_band) != n:
+        # assume it is a single value
+        bands = np.repeat(from_band, n).reshape((n,))
+    else:
+        bands = np.array(from_band).reshape((n,))
+
     m_t = np.ma.zeros_like(_m)
     m_t.mask = True
     unc_t = np.ma.zeros_like(_m)
     unc_t.mask = True
 
-    bands = np.array(from_band).reshape((np.size(from_band),))
     for band in set(bands):
         color = cm[band, to_band]
         if color is None:
@@ -67,8 +72,10 @@ def transform(
         m_t[i] = _m[i] - color.index
         unc_t[i] = np.hypot(_unc[i], color.unc)
 
-    if not any(m_t.mask):
-        m_t = m_t.data
-        unc_t = unc_t.data
+    # m_t.reshape(()) and m_t.squeeze() can result in a weird object that can't
+    # be printed: "*** AttributeError: '_MaskedPrintOption' object has no
+    # attribute 'size'""
+    if m.shape == ():
+        return m_t[0], unc_t[0]
 
     return m_t.reshape(m.shape), unc_t.reshape(m.shape)

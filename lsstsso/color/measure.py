@@ -1,4 +1,4 @@
-from itertools import combinations
+from itertools import combinations, pairwise
 
 import astropy.units as u
 import numpy as np
@@ -12,6 +12,7 @@ def measure(
     m: u.Quantity[u.mag],
     unc: u.Quantity[u.mag],
     bands: np.ndarray[Band],
+    all: bool = False,
 ) -> ColorMatrix:
     """Calculate colors from observations.
 
@@ -27,6 +28,11 @@ def measure(
     bands : array of Band
         The observational bands for each ``m``.
 
+    all : bool, optional
+        By default, the minimum color set is computed.  For example, if
+        observations in u, r, and i are provided, only u-r, and r-i are
+        returned, not u-i.  Set ``all=True`` to return all color pairings.
+
 
     Returns
     -------
@@ -38,6 +44,9 @@ def measure(
     m = u.Quantity(m, u.mag).to_value("mag")
     unc = u.Quantity(unc, u.mag).to_value("mag")
     bands = np.array(bands)
+
+    if len(set(bands)) < 2:
+        return ColorMatrix()
 
     # averaged apparent magnitude
     avg, avg_unc = np.ma.zeros((2, 6))
@@ -59,9 +68,18 @@ def measure(
         A[i, j] = 1
         A[i, k] = -1
 
+    if not all:
+        # if we have u, g, r: just want u-g, g-r
+        # if we have u, r, i: just want u-r, r-i
+        # if we have u, g, r, i: just want u-g, g-r, r-i
+        wanted = list(pairwise(sorted(Band(b) for b in set(bands))))
+        for i, (blue, red) in enumerate(combinations(Band, 2)):
+            if (blue, red) not in wanted:
+                A[i] = 0
+
     # calculate
-    mask = ((A != 0) @ avg.mask) != 0
-    index = np.ma.MaskedArray(A @ avg.filled(1), mask=mask)
+    mask = (A != 0) @ avg.mask + (np.prod(A == 0, 1) == 1)
+    index = np.ma.MaskedArray(A @ avg.filled(0), mask=mask)
 
     cov_mask = np.zeros((15, 15), bool)
     cov_mask[mask] = True

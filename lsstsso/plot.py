@@ -7,7 +7,6 @@ from astropy.time import Time
 from .band import Band
 from .color.color import Color
 from .color.color_matrix import ColorMatrix
-from .color.transform import transform
 
 markers = {
     Band.u: {
@@ -47,19 +46,15 @@ def colors_to_labels(
             color = None
         else:
             color = None
-            try:
-                # first use default color matrix
-                color, _ = transform(0 * u.mag, 0 * u.mag, band, anchor, default_cm)
-                color = color.value
 
-                if cm is not None:
-                    # now try provided color matrix
-                    color, _ = transform(0 * u.mag, 0 * u.mag, band, anchor, cm)
-                    color = color.value
-            except ValueError:
-                # at least one transformation failed, but this is OK, either
-                # color will be `None` or the default color matrix was used
-                pass
+            if cm is not None:
+                color, _ = cm.transform(0 * u.mag, 0 * u.mag, band, anchor)
+
+            if color is np.ma.masked and default_cm is not None:
+                # use default
+                color, _ = default_cm.transform(0 * u.mag, 0 * u.mag, band, anchor)
+
+            color = None if (color in [None, np.ma.masked]) else color.value
 
         if color is None or band == anchor:
             label = f"${band}$"
@@ -89,7 +84,7 @@ def lightcurve(
         ax = plt.gca()
 
     if use_default_cm:
-        default_cm = ColorMatrix(
+        default_cm = ColorMatrix.from_colors(
             [
                 Color("u", "g", 1.83 * u.mag, 0.05 * u.mag),
                 Color("g", "r", 0.59 * u.mag, 0.01 * u.mag),
@@ -119,12 +114,11 @@ def lightcurve(
         if cm is None or band == anchor:
             ax.errorbar(t[i], m[i], unc[i], **opts)
         else:
-            try:
-                a, aunc = transform(m[i], unc[i], band, anchor, cm)
-            except ValueError:
+            a, aunc = cm.transform(m[i], unc[i], band, anchor)
+            if any(a.mask):
                 if default_cm:
-                    a, aunc = transform(m[i], unc[i], band, anchor, default_cm)
+                    a, aunc = default_cm.transform(m[i], unc[i], band, anchor)
                 else:
                     a = m[i]
                     aunc = unc[i]
-            ax.errorbar(t[i], a, aunc, **opts)
+            ax.errorbar(t[i], a.data, aunc.data, **opts)

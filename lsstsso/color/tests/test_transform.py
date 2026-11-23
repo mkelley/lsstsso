@@ -26,6 +26,10 @@ def test_transform():
     assert u.isclose(m, 2 * u.mag)
     assert u.isclose(unc, 0.01 * u.mag)
 
+    m, unc = cm.transform(2 * u.mag, 0.01 * u.mag, Band.i, Band.r)
+    assert m is np.ma.masked
+    assert unc is np.ma.masked
+
 
 def test_transform_multiple():
     m1 = [1, 2, 4, 8] * u.mag
@@ -49,3 +53,7 @@ def test_transform_multiple():
         [np.hypot(0.01, 0.01), np.hypot(0.02, 0.01), 0.04] * u.mag,
     )
     assert unc2[3].mask
+
+    # we can also pass a single band for all measurements
+    m2, unc2 = cm.transform(m1, unc1, "g", "r")
+    assert len(m2) == len(unc2) == 4
