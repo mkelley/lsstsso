@@ -74,3 +74,7 @@ Calculate *g*–*r* color from *u*–*g*, *u*–*i*, and *r*–*i* measurements:
 >>> result["g", "r"]
 g-r = 0.300 ± 0.017 mag
 ```
+
+# Acknowledgements
+
+This work was supported by LSST Discovery Alliance and the Heising-Simons Foundation through Grant No 2026-HSF-ES-03-Kelley. The views expressed are those of the author(s) and do not necessarily reflect the views of LSST Discovery Alliance or its funding partners.
