@@ -58,10 +58,8 @@ def transform(
     else:
         bands = np.array(from_band).reshape((n,))
 
-    m_t = np.ma.zeros_like(_m)
-    m_t.mask = True
-    unc_t = np.ma.zeros_like(_m)
-    unc_t.mask = True
+    m_t = np.ma.masked_array(_m, mask=True)
+    unc_t = np.ma.masked_array(_unc, mask=True)
 
     for band in set(bands):
         color = cm[band, to_band]
