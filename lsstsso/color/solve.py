@@ -5,7 +5,10 @@ from itertools import combinations
 import numpy as np
 from scipy.special import factorial
 
+from ..util import merge_sets
 from .color_matrix import ColorMatrix
+from .merge import merge
+from .sample import sample
 
 
 def solve(*color_matrices: list[ColorMatrix]) -> ColorMatrix:
@@ -53,6 +56,28 @@ def solve(*color_matrices: list[ColorMatrix]) -> ColorMatrix:
     # There are 5 fundamental colors: u-g, g-r, r-i, i-z, z-y.  But observations
     # can be of any band pair, e.g., g-i.  This gives us 5 variables, and 6! /
     # (2! * (6 - 2)!) = 15 equations.
+
+    # first, collect all the colors
+    color_sets = []
+    for cm in color_matrices:
+        for color in cm:
+            pair = {color.left, color.right}
+            if pair not in color_sets:
+                color_sets.append(pair)
+
+    # identify disjoint color sets
+    band_sets = merge_sets(color_sets)
+
+    # if there are multiple band sets, then split the color matrices into the
+    # independent sets and solve each, then merge the results
+    if len(band_sets) > 1:
+        results = []  # collect all the solutions
+        for bands in band_sets:
+            split = [sample(cm, bands) for cm in color_matrices]
+            results.append(solve(*split))
+
+        # merge and return the results
+        return merge(results)
 
     # How many bands are given?  For the method below, we need to limit
     # calculations to the observed bands.
@@ -108,19 +133,16 @@ def solve(*color_matrices: list[ColorMatrix]) -> ColorMatrix:
     y_all = D @ x_hat
     cov_all = D @ cov_x_hat @ D.T
 
-    # make and return the color matrix
-    index = np.ma.zeros(15)
-    index.mask = True
-    cov = np.ma.zeros((15, 15))
-    cov.mask = True
+    # make and return the result color matrix
+    result = ColorMatrix()
 
     ii = []
     for i, (blue, red) in enumerate(combinations(bands, 2)):
         ii.append(ColorMatrix.bands_to_array_index(blue, red))
 
-    index[ii] = y_all
+    result.index[ii] = y_all
     for i in range(n_colors):
         for j in range(n_colors):
-            cov[ii[i], ii[j]] = cov_all[i, j]
+            result.cov[ii[i], ii[j]] = cov_all[i, j]
 
-    return ColorMatrix(index, cov)
+    return result

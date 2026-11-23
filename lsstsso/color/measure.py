@@ -30,7 +30,7 @@ def measure(
 
     Returns
     -------
-    colors: list of Color
+    result : ColorMatrix
         Measured colors.
 
     """
@@ -60,15 +60,15 @@ def measure(
         A[i, k] = -1
 
     # calculate
-    color_mask = ((A != 0) @ avg.mask) != 0
-    colors = np.ma.MaskedArray(A @ avg.filled(1), mask=color_mask)
+    mask = ((A != 0) @ avg.mask) != 0
+    index = np.ma.MaskedArray(A @ avg.filled(1), mask=mask)
 
     cov_mask = np.zeros((15, 15), bool)
-    cov_mask[color_mask] = True
-    cov_mask[:, color_mask] = True
+    cov_mask[mask] = True
+    cov_mask[:, mask] = True
     cov = np.ma.MaskedArray(
         A @ np.diag(avg_unc.filled(1) ** 2) @ A.T,
         mask=cov_mask,
     )
 
-    return ColorMatrix(colors, cov)
+    return ColorMatrix(index, cov)

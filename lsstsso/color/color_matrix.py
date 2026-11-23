@@ -138,7 +138,8 @@ class ColorMatrix:
         return np.sqrt(np.ma.diag(self.cov))
 
     def __repr__(self):
-        return f"<ColorMatrix: {len(self)} values>"
+        plural = "" if len(self) == 1 else "s"
+        return f"<ColorMatrix: {len(self)} value{plural}>"
 
     def __str__(self):
         lines = []

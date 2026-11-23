@@ -1,6 +1,6 @@
 import numpy as np
 
-from ..util import weighted_mean
+from ..util import merge_sets, weighted_mean
 
 
 def test_weighted_mean():
@@ -27,3 +27,27 @@ def test_weighted_mean():
     m, munc = weighted_mean(x, xunc)
     assert np.isclose(m, 1.2)
     assert np.isclose(munc, 0.00894427190999916)
+
+
+def test_merge_sets():
+    # first, nothing overlaps
+    sets = [{1, 2}, {3, 4}, {5, 6}]
+    result = merge_sets(sets)
+    assert result == sets
+
+    sets.append({4, 5})
+    result = merge_sets(sets)
+    assert len(result) == 2
+    assert {1, 2} in result
+    assert {3, 4, 5, 6} in result
+
+    sets.append({2, 5})
+    result = merge_sets(sets)
+    assert len(result) == 1
+    assert {1, 2, 3, 4, 5, 6} in result
+
+    sets = [{1, 2}, {2, 3}, {2, 5}, {4, 6}, {5, 7}]
+    result = merge_sets(sets)
+    assert len(result) == 2
+    assert {1, 2, 3, 5, 7} in result
+    assert {4, 6} in result

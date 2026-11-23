@@ -5,6 +5,25 @@ from ..color_matrix import ColorMatrix
 from ..solve import solve
 
 
+def test_solve_trivial():
+    """Nothing to calculate"""
+
+    colors = [
+        Color("u", "r", 2.0, 0.06),
+    ]
+
+    cm = ColorMatrix.from_colors(colors)
+    result = solve(cm)
+
+    assert len(result) == 1
+    assert np.isclose(cm.index[1], 2)
+
+    expected = np.ma.zeros((15, 15))
+    expected.mask = True
+    expected[1, 1] = 0.06**2
+    assert np.ma.allclose(result.cov, expected)
+
+
 def test_solve_simple():
     """Only one way to calculate the missing color"""
 
@@ -224,3 +243,18 @@ def test_multiple():
     expected[1, 5] = var
     expected[5, 5] = var
     assert np.ma.allclose(result.cov, expected)
+
+
+def test_disjoint():
+    # single colors that do not overlap
+    cm1 = ColorMatrix.from_colors([Color("u", "g", 1.21, 0.01)])
+    cm2 = ColorMatrix.from_colors([Color("r", "i", 0.12, 0.01)])
+
+    result = solve(cm1, cm2)
+
+    expected = ColorMatrix()
+    expected.index[[0, 9]] = [1.21, 0.12]
+    expected.cov[0, 0] = 0.01**2
+    expected.cov[9, 9] = 0.01**2
+    assert np.ma.allclose(result.index, expected.index)
+    assert np.ma.allclose(result.cov, expected.cov)
