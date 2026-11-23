@@ -200,3 +200,27 @@ def test_multiple():
     assert np.isclose(result.cov[0, 1], cov)  # cov(u-g, u-r)
     assert np.isclose(result.cov[0, 5], -cov)  # cov(u-g, g-r)
     assert np.isclose(result.cov[1, 5], cov)  # cov(u-r, g-r)
+
+    # check that single color matrices work
+    cm1 = ColorMatrix.from_colors([Color("u", "g", 1.21, 0.01)])
+    cm2 = ColorMatrix.from_colors([Color("g", "r", 0.42, 0.01)])
+    result = solve(cm1, cm2)
+
+    # check values
+    assert np.isclose(result.index[0], 1.21)  # u-g
+    assert np.isclose(result.index[5], 0.42)  # g-r
+
+    # check covariance matrix
+    var = 0.01**2
+    expected = np.ma.zeros((15, 15))
+    expected.mask = True
+    expected[0, 0] = var
+    expected[0, 1] = var
+    expected[0, 5] = 0
+    expected[1, 0] = var
+    expected[1, 1] = 2 * var
+    expected[1, 5] = var
+    expected[0, 5] = 0
+    expected[1, 5] = var
+    expected[5, 5] = var
+    assert np.ma.allclose(result.cov, expected)
