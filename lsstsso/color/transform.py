@@ -2,6 +2,7 @@ import typing
 
 import astropy.units as u
 import numpy as np
+from astropy.utils.masked import Masked
 
 from ..band import Band
 
@@ -58,8 +59,8 @@ def transform(
     else:
         bands = np.array(from_band).reshape((n,))
 
-    m_t = np.ma.masked_array(_m, mask=True)
-    unc_t = np.ma.masked_array(_unc, mask=True)
+    m_t = Masked(_m, mask=True)
+    unc_t = Masked(_unc, mask=True)
 
     for band in set(bands):
         color = cm[band, to_band]
